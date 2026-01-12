@@ -44,191 +44,105 @@ export class LLMService {
     this.model = model;
   }
 
-  /**
+/**
    * 生成函数实现代码
    * @param isLastCall 是否是最后一次调用（达到最大深度）
    */
-  async generateFunctionCode(
-    functionName: string,
-    args: unknown[],
-    outputSchema?: z.ZodType<unknown>,
-    isLastCall: boolean = false
-  ): Promise<LLMGenerateResult> {
-    // 生成更友好的 schema 描述
-    const schemaDescription = outputSchema
-      ? `\nOutput type: ${this.describeSchema(outputSchema)}\nThe output MUST match this type.`
-      : '';
+async generateFunctionCode(
+  functionName: string,
+  args: unknown[],
+  outputSchema?: z.ZodType<unknown>,
+  isLastCall: boolean = false
+): Promise<LLMGenerateResult> {
+  // 1. 构建精简的 Schema 描述
+  const schemaDesc = outputSchema
+    ? `\nExpected Return Type: ${this.describeSchema(outputSchema)}`
+    : '';
 
-    const systemPrompt = 'You are a JavaScript expert. Generate clean, efficient JavaScript code. Return ONLY the function code, no markdown, no backticks.';
-    
-    let strategyGuidance = '';
-    if (isLastCall) {
-      // 最后一次调用，必须直接生成结果，不提及v和z避免混淆
-      strategyGuidance = `\n\n⚠️ CRITICAL: Maximum recursion depth reached.
-You MUST generate the actual result DIRECTLY using pure JavaScript:
-- Implement the logic yourself, DO NOT delegate
-- Return concrete output, not placeholders
-- Use built-in JavaScript features only
+  // 2. 构建参数摘要，帮助模型判断是否是直接 Prompt
+  const argsDesc = args.length > 0 
+    ? `Arguments: ${JSON.stringify(args).slice(0, 1000)}` // 截断过长参数避免 Token 浪费
+    : 'Arguments: None';
 
-Implementation guide - Generate concrete output:
-• ASCII art/Character art: Create actual visual patterns with characters
-• Text generation: Use template literals and string methods
-• Data structures: Build objects/arrays with real values
-• Math/Logic: Calculate directly
+  // 3. System Prompt: 定义环境、人格和边界
+  // 重点：强调 "有趣" 和 "Native Execution" (直接执行)
+  const systemPrompt = `You are the AI engine for 'Vibe', a runtime that executes JavaScript generated on-the-fly.
 
-For ASCII art specifically:
-• Use simple characters: *, o, O, -, |, +, #, etc.
-• Create recognizable shapes and patterns
-• Use proper spacing and newlines (\\n)
+GLOBAL CONTEXT (Available in your code):
+1. args: Array of inputs (args[0], args[1]...).
+2. z: Zod library for validation.
+3. v: The Vibe instance for recursive AI calls.
+ - Syntax: await v.func(arg)(z.type()) or await v["prompt"]()(z.type())
+ - COST WARNING: Calling 'v' triggers a new LLM bill. Avoid if possible.
 
-Examples:
-1. Eyes ASCII art (for 👀, 20x20):
-   const lines = [];
-   lines.push("    oooo    oooo    ");
-   lines.push("   o    o  o    o   ");
-   lines.push("   o  * o  o  * o   ");
-   lines.push("    oooo    oooo    ");
-   return lines.join("\\n");
+CORE PHILOSOPHY:
+1. ⚡️ NATIVE FIRST: If you (the LLM) know the result or logic, implement it DIRECTLY in JavaScript.
+ - Example: v["What is 1+1"]() -> return 2; (Don't call v.add)
+ - Example: v["Tell a joke"]() -> return "Why did the chicken..."; (Don't call v.generateJoke)
+ - ONLY call 'v' for: Complex multi-step reasoning, browsing, or when you explicitly need a sub-agent.
+2. 🎨 FUN > FUNCTIONAL: Unless strictly logical (math/data), prefer creative, entertaining outputs. Use emojis, ASCII art, or randomization.
+3. 🛡️ ROBUST: Handle undefined args safely.
 
-2. Heart ASCII art:
-   return \`  **   **  \\n **** **** \\n***********\\n **********\\n  ******  \`;
+CONSTRAINT: Return ONLY the function body code. No markdown, no wrappers.`;
 
-3. Generate profile:
-   return { name: args[0] || "User", age: args[1] || 25, email: \`\${(args[0] || "user").toLowerCase()}@example.com\` };`;
-    } else {
-      // 非最后一次调用，详细说明v和z
-      strategyGuidance = `\n\n📦 Available Global Objects:
+  // 4. User Prompt: 动态构建任务
+  // 区分 "最后一次调用" 和 "普通调用"
+  let specificInstruction = '';
 
-1. **v** - AI Function Caller (Vibe instance)
-   - Dynamically calls LLM to generate and execute functions
-   - Usage: v.functionName(args) or v["function name"](args)
-   - Returns a callable that accepts optional Zod schema for validation
-   - Example: await v.helperTask(data)(z.string())
-   - ⚠️ Each call triggers a new LLM generation (expensive!)
+  if (isLastCall) {
+    specificInstruction = `
+⚠️ MAX RECURSION REACHED.
+You MUST return a value directly using pure JavaScript.
+DO NOT call 'v' again.
+- If asking for a prompt/question: Answer it directly as a string.
+- If creative: Return a random selection from an array or a template string.
+- If logical: Calculate it.`;
+  } else {
+    specificInstruction = `
+Task: Implement function "${functionName}"
+${argsDesc}${schemaDesc}
 
-2. **z** - Type Validation (from 'zod' library)
-   - Schema definition and runtime validation
-   - Common types: z.string(), z.number(), z.boolean(), z.array(), z.object()
-   - Use with v calls to ensure type safety: v.task()(z.number())
-
-3. **args** - Input arguments array
-   - Access via: args[0], args[1], args[2], etc.
-
-🎯 STRATEGY - Choose Wisely:
-
-✅ WHEN TO IMPLEMENT DIRECTLY (Preferred - more efficient):
-   • ASCII art / Character art - Use simple characters (*, o, -, |) to draw shapes
-   • Pattern generation - Create visual patterns with loops and string operations
-   • Text formatting - Use template literals and string methods
-   • Basic math - Calculate directly
-   • Data structures - Build objects/arrays with concrete values
-   • Simple transformations - String ops, array methods
-   
-   Examples:
-   • const rows = []; for(let i=0; i<10; i++) rows.push("o o"); return rows.join("\\n"); // Eyes
-   • return args[0] + args[1]; // Math
-   • return { name: args[0], age: args[1] }; // Object
-
-⚠️ WHEN TO USE **v** (Only for truly complex tasks):
-   • Multi-step workflows needing decomposition into different specialized tasks
-   • Tasks requiring external knowledge you don't have (rare)
-   • When specific sub-problems are clearer than the whole
-   
-   ⚠️ CRITICAL: Always pass arguments!
-   • ✅ await v[\`process \${args[0]} data\`](args[0], args[1])(z.string())
-   • ❌ await v[\`process \${args[0]} data\`]()(z.string()) // args not passed!
-   
-   Examples (use sparingly):
-   • const data = await v.fetchExternalData(args[0])(z.object({...})); return data.value;
-   • const part1 = await v.complexCalculation(args[0])(z.number()); return part1 * 2;
-
-⛔ CRITICAL RULE - NEVER CALL YOURSELF:
-   • Current function: "${functionName}"
-   • FORBIDDEN: v.${functionName}(...), v["${functionName}"](...), v[\`${functionName}...\`](...)
-   • FORBIDDEN: Semantically similar calls (e.g., "drawHeart" → "draw a heart")
-   • This causes infinite recursion!
-
-✅ GOOD Patterns:
-   // Direct ASCII art implementation
-   const lines = ["  o o  ", " o   o ", "  o o  "];
-   return lines.join("\\n");
-   
-   // Simple math
-   return args[0] * 2;
-   
-   // Delegation WITH args (if really needed)
-   const result = await v.complexTask(args[0], args[1])(z.string());
-   return result;
-
-❌ BAD Patterns:
-   return await v.${functionName}(args[0]); // SELF LOOP!
-   return await v["${functionName}"](args); // SELF LOOP!
-   return await v[\`task \${args[0]}\`]()(z.string()); // Missing args parameter!
-   return await v.drawSomething()(z.string()); // Should implement directly!
-
-💡 Best Practices:
-   • Include concrete values: v[\`处理\${args[0]}\`]() ✓ not v["处理数据"]() ✗
-   • Always add Zod schema: (z.string()), (z.number()), (z.object({...}))
-   • Delegate creative tasks even if they seem "simple" - LLM is better at them`;
-    }
-    
-    const userPrompt = `Generate a JavaScript function body for: "${functionName}"
-Arguments: ${args.length > 0 ? JSON.stringify(args) : 'None'}${schemaDescription}
-${strategyGuidance}
-
-📋 Code Requirements:
-- Access arguments via args array: args[0], args[1], etc.
-- Return the result directly (use 'return' statement)
-- Async/await is supported
-- Write robust code: check bounds, handle edge cases, use safe operators
-- DO NOT include function declaration wrapper
-- DO NOT include markdown code fences
-
-✅ GOOD examples:
-   return args[0] + args[1];
-   return \`Hello \${args[0]}\`;
-   const char = line[x] || ' '; // Safe: handle undefined
-   const result = args[0] * 2; return result;
-
-❌ BAD examples:
-   function ${functionName}(args) { return args[0]; }  // NO function wrapper!
-   \`\`\`javascript ... \`\`\`  // NO markdown!
-   const char = line[x]; char.repeat(2); // Unsafe: char might be undefined!
-
-⚠️  Return ONLY the executable function body code.`;
-
-    const temperature = 0.3;
-    const maxTokens = 2000;
-
-    const response = await this.client.chat.completions.create({
-      model: this.model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature,
-      max_tokens: maxTokens,
-    });
-
-    const rawContent = response.choices[0]?.message?.content?.trim() || '';
-    const code = this.cleanCode(rawContent);
-
-    return {
-      code,
-      systemPrompt,
-      userPrompt,
-      model: this.model,
-      temperature,
-      maxTokens,
-      rawContent,
-      finishReason: response.choices[0]?.finish_reason,
-      usage: response.usage ? {
-        promptTokens: response.usage.prompt_tokens,
-        completionTokens: response.usage.completion_tokens,
-        totalTokens: response.usage.total_tokens,
-      } : undefined,
-    };
+GUIDANCE:
+- If "${functionName}" looks like a prompt/question (e.g. "write a poem", "translate this"), ANSWER IT directly in the returned code string.
+- If it implies a visual (e.g. "draw"), return ASCII art.
+- If it allows variation, use Math.random() to be unpredictable and fun.
+- Use 'await v' ONLY if the task is too complex for a single function body.`;
   }
+
+  const userPrompt = `${specificInstruction}`;
+
+  const temperature = 0.6; // 稍微调高温度以增加趣味性
+  const maxTokens = 2000;
+
+  const response = await this.client.chat.completions.create({
+    model: this.model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ],
+    temperature,
+    max_tokens: maxTokens,
+  });
+
+  const rawContent = response.choices[0]?.message?.content?.trim() || '';
+  const code = this.cleanCode(rawContent);
+
+  return {
+    code,
+    systemPrompt,
+    userPrompt,
+    model: this.model,
+    temperature,
+    maxTokens,
+    rawContent,
+    finishReason: response.choices[0]?.finish_reason,
+    usage: response.usage ? {
+      promptTokens: response.usage.prompt_tokens,
+      completionTokens: response.usage.completion_tokens,
+      totalTokens: response.usage.total_tokens,
+    } : undefined,
+  };
+}
 
   /**
    * 将 Zod schema 转换为易读的描述
