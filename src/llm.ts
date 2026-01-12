@@ -64,15 +64,28 @@ Requirements:
 - Access arguments via args array: args[0], args[1], etc.
 - Return the result directly
 - Use JavaScript/async syntax (await is supported)
+- DO NOT wrap code in function declaration (no "function name()" or "async function")
+- Return ONLY the function body code
 
 Available global objects:
 - v: vibe instance for calling other AI functions (e.g., await v.otherFunction(args))
 - z: zod library for schema validation (e.g., z.string(), z.number(), z.object({...}))
 
-For complex tasks, you can compose functions by calling v recursively.
-Example: await v["helper function"](data)(z.string())
+IMPORTANT STRATEGY:
+When facing complex tasks, DO NOT implement complex algorithms or use unavailable libraries.
+Instead, leverage the POWER OF LLM by delegating to other AI functions via v.
 
-Return ONLY executable code, nothing else.`;
+Examples:
+- For "emoji to ASCII art": return await v[\`将\${args[0]}转化为\${args[1] || 100}x\${args[2] || 100}字符画\`]()(z.string());
+- For "complex data processing": break into steps using v.step1(), v.step2(), etc.
+- For "creative tasks": delegate to descriptive function names that LLM can understand
+- For "format conversions": use v[\`convert \${format} to \${targetFormat}\`](data)
+
+Think: Can LLM generate this directly? If yes, use v! Don't write complex code.
+
+IMPORTANT: Return ONLY executable code WITHOUT function declaration.
+Good: return args[0] + args[1];
+Bad: function add(args) { return args[0] + args[1]; }`;
 
     const temperature = 0.3;
     const maxTokens = 2000;
@@ -108,12 +121,28 @@ Return ONLY executable code, nothing else.`;
   }
 
   /**
-   * 清理代码（移除 markdown 标记）
+   * 清理代码（移除 markdown 标记和函数声明）
    */
   private cleanCode(code: string): string {
-    return code
+    // 移除可能的 markdown 代码块标记
+    code = code
       .replace(/^```(?:typescript|ts|javascript|js)?\s*\n/i, '')
       .replace(/\n```$/, '')
       .trim();
+    
+    // 移除函数声明包装
+    // 匹配: function name(...) { ... } 或 async function name(...) { ... }
+    const funcDeclMatch = code.match(/^(?:async\s+)?function\s+\w*\s*\([^)]*\)\s*\{([\s\S]*)\}$/);
+    if (funcDeclMatch) {
+      return funcDeclMatch[1].trim();
+    }
+    
+    // 匹配箭头函数: (...) => { ... } 或 (...) => ...
+    const arrowFuncMatch = code.match(/^\([^)]*\)\s*=>\s*\{([\s\S]*)\}$/);
+    if (arrowFuncMatch) {
+      return arrowFuncMatch[1].trim();
+    }
+    
+    return code;
   }
 }

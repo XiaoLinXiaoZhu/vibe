@@ -27,10 +27,9 @@ export async function testChinese() {
   console.log(`  v.将字符串转大写('hello world') = ${result4} ✓\n`);
 
   // 测试 5: 复杂中文函数名
-  console.log('测试 5: 复杂中文函数');
-  const result5 = await v.将emoji转化为字符画('👀', '200', '200')(z.string());
-  console.log(`  v.将emoji转化为字符画('👀', '200', '200'):`);
-  console.log(`  ${result5.substring(0, 50)}... ✓\n`);
+  console.log('测试 5: 复杂中文函数 - 数组操作');
+  const result5 = await v.计算数组的和([1, 2, 3, 4, 5])(z.number());
+  console.log(`  v.计算数组的和([1, 2, 3, 4, 5]) = ${result5} ✓\n`);
 
   console.log('=== 中文函数名测试完成 ===\n');
 }

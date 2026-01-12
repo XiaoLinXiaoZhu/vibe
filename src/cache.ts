@@ -1,5 +1,6 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
+import { createHash } from 'crypto';
 import { CacheKey, CacheItem } from './types.js';
 
 /**
@@ -29,9 +30,11 @@ export class FunctionCacheManager {
 
   /**
    * 序列化缓存键
+   * 使用 SHA256 哈希避免文件名过长
    */
   private serializeKey(key: CacheKey): string {
-    return Buffer.from(JSON.stringify(key)).toString('base64');
+    const keyString = JSON.stringify(key);
+    return createHash('sha256').update(keyString).digest('hex');
   }
 
   /**

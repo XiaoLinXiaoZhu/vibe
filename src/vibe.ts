@@ -52,10 +52,16 @@ export class vibe {
    * @param vibeProxy vibe 实例的 proxy，供代码中使用
    */
   private async executeCode(code: string, args: unknown[], vibeProxy: any): Promise<unknown> {
-    // 使用 AsyncFunction 支持 await
-    const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
-    const fn = new AsyncFunction('args', 'v', 'z', `"use strict";\n${code}`);
-    return await fn(args, vibeProxy, zodNamespace);
+    try {
+      // 使用 AsyncFunction 支持 await
+      const AsyncFunction = (async function () {}).constructor as FunctionConstructor;
+      const fn = new AsyncFunction('args', 'v', 'z', `"use strict";\n${code}`);
+      return await fn(args, vibeProxy, zodNamespace);
+    } catch (error) {
+      // 如果代码有语法错误，记录详细信息
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      throw new Error(`Code execution failed: ${errorMsg}\n\nGenerated code:\n${code}`);
+    }
   }
 
   /**
@@ -210,9 +216,21 @@ export function createVibe(config: VibeConfig = {}): any {
       
       return (...args: unknown[]) => {
         const builder = new FunctionCallBuilder(instance, String(prop), args, vibeProxy);
-        return new Proxy(builder, {
-          apply: (_t, _this, [schema]) => builder.__call(schema),
+        
+        // 创建一个函数作为 Proxy 的 target，这样 apply trap 才能工作
+        const callableFunction = function(schema?: z.ZodType<unknown>) {
+          return builder.__call(schema);
+        };
+        
+        // 将 builder 的方法复制到函数上
+        Object.assign(callableFunction, {
+          then: builder.then.bind(builder),
+          catch: builder.catch.bind(builder),
+          finally: builder.finally.bind(builder),
+          withSchema: builder.withSchema.bind(builder),
         });
+        
+        return callableFunction;
       };
     },
   });
