@@ -54,8 +54,9 @@ export class LLMService {
     outputSchema?: z.ZodType<unknown>,
     isLastCall: boolean = false
   ): Promise<LLMGenerateResult> {
+    // 生成更友好的 schema 描述
     const schemaDescription = outputSchema
-      ? `\nOutput schema: ${JSON.stringify(outputSchema)}\nThe output MUST satisfy this schema.`
+      ? `\nOutput type: ${this.describeSchema(outputSchema)}\nThe output MUST match this type.`
       : '';
 
     const systemPrompt = 'You are a JavaScript expert. Generate clean, efficient JavaScript code. Return ONLY the function code, no markdown, no backticks.';
@@ -69,29 +70,31 @@ You MUST generate the actual result DIRECTLY using pure JavaScript:
 - Return concrete output, not placeholders
 - Use built-in JavaScript features only
 
-Implementation guide:
-• Text/String tasks: Use template literals, string methods, concatenation
-• ASCII art: Return multiline string with actual characters
-• Data generation: Create objects/arrays with concrete values
-• Math/Logic: Implement calculations directly
-• Creative content: Generate based on function name semantics and arguments
+Implementation guide - Generate concrete output:
+• ASCII art/Character art: Create actual visual patterns with characters
+• Text generation: Use template literals and string methods
+• Data structures: Build objects/arrays with real values
+• Math/Logic: Calculate directly
+
+For ASCII art specifically:
+• Use simple characters: *, o, O, -, |, +, #, etc.
+• Create recognizable shapes and patterns
+• Use proper spacing and newlines (\\n)
 
 Examples:
-1. Draw ASCII heart:
-   return \`  ♥♥   ♥♥  \\n ♥♥♥♥ ♥♥♥♥ \\n♥♥♥♥♥♥♥♥♥\\n ♥♥♥♥♥♥♥  \\n  ♥♥♥♥♥   \`;
+1. Eyes ASCII art (for 👀, 20x20):
+   const lines = [];
+   lines.push("    oooo    oooo    ");
+   lines.push("   o    o  o    o   ");
+   lines.push("   o  * o  o  * o   ");
+   lines.push("    oooo    oooo    ");
+   return lines.join("\\n");
 
-2. Get age:
-   return 25;
+2. Heart ASCII art:
+   return \`  **   **  \\n **** **** \\n***********\\n **********\\n  ******  \`;
 
 3. Generate profile:
-   return { name: args[0] || "User", age: args[1] || 25, email: \`\${(args[0] || "user").toLowerCase()}@example.com\` };
-
-4. Convert emoji to ASCII (20x20):
-   const rows = [];
-   for (let i = 0; i < 20; i++) {
-     rows.push("* ".repeat(20));
-   }
-   return rows.join("\\n");`;
+   return { name: args[0] || "User", age: args[1] || 25, email: \`\${(args[0] || "user").toLowerCase()}@example.com\` };`;
     } else {
       // 非最后一次调用，详细说明v和z
       strategyGuidance = `\n\n📦 Available Global Objects:
@@ -113,40 +116,60 @@ Examples:
 
 🎯 STRATEGY - Choose Wisely:
 
-✅ WHEN TO USE **v** (Delegate to LLM):
-   • Complex multi-step workflows needing decomposition
-   • Tasks requiring different specialized capabilities (e.g., format conversion, creative generation)
-   • When breaking down into clear, well-defined sub-tasks adds value
+✅ WHEN TO IMPLEMENT DIRECTLY (Preferred - more efficient):
+   • ASCII art / Character art - Use simple characters (*, o, -, |) to draw shapes
+   • Pattern generation - Create visual patterns with loops and string operations
+   • Text formatting - Use template literals and string methods
+   • Basic math - Calculate directly
+   • Data structures - Build objects/arrays with concrete values
+   • Simple transformations - String ops, array methods
    
-   Example: await v[\`convert emoji \${args[0]} to unicode\`]()(z.string())
+   Examples:
+   • const rows = []; for(let i=0; i<10; i++) rows.push("o o"); return rows.join("\\n"); // Eyes
+   • return args[0] + args[1]; // Math
+   • return { name: args[0], age: args[1] }; // Object
 
-❌ WHEN TO IMPLEMENT DIRECTLY (No v):
-   • Simple, concrete tasks solvable with basic JavaScript
-   • Pure computations (math, string ops, array manipulation)
-   • Direct output generation (ASCII art, simple text, numbers)
-   • Tasks that would create semantic loops
+⚠️ WHEN TO USE **v** (Only for truly complex tasks):
+   • Multi-step workflows needing decomposition into different specialized tasks
+   • Tasks requiring external knowledge you don't have (rare)
+   • When specific sub-problems are clearer than the whole
    
-   Example: return args[0] + args[1]; // Just do it!
+   ⚠️ CRITICAL: Always pass arguments!
+   • ✅ await v[\`process \${args[0]} data\`](args[0], args[1])(z.string())
+   • ❌ await v[\`process \${args[0]} data\`]()(z.string()) // args not passed!
+   
+   Examples (use sparingly):
+   • const data = await v.fetchExternalData(args[0])(z.object({...})); return data.value;
+   • const part1 = await v.complexCalculation(args[0])(z.number()); return part1 * 2;
 
 ⛔ CRITICAL RULE - NEVER CALL YOURSELF:
-   • Function name: "${functionName}"
+   • Current function: "${functionName}"
    • FORBIDDEN: v.${functionName}(...), v["${functionName}"](...), v[\`${functionName}...\`](...)
-   • FORBIDDEN: Semantically similar names (e.g., "drawHeart" → "draw a heart")
-   • Self-loops cause infinite recursion!
+   • FORBIDDEN: Semantically similar calls (e.g., "drawHeart" → "draw a heart")
+   • This causes infinite recursion!
 
 ✅ GOOD Patterns:
-   return "❤️".repeat(args[0]); // Direct
-   const part = await v.subtaskA(args[0])(z.string()); return part.toUpperCase(); // Real decomposition
+   // Direct ASCII art implementation
+   const lines = ["  o o  ", " o   o ", "  o o  "];
+   return lines.join("\\n");
+   
+   // Simple math
+   return args[0] * 2;
+   
+   // Delegation WITH args (if really needed)
+   const result = await v.complexTask(args[0], args[1])(z.string());
+   return result;
 
 ❌ BAD Patterns:
    return await v.${functionName}(args[0]); // SELF LOOP!
    return await v["${functionName}"](args); // SELF LOOP!
-   return await v["vague similar task"](); // Unclear recursion
+   return await v[\`task \${args[0]}\`]()(z.string()); // Missing args parameter!
+   return await v.drawSomething()(z.string()); // Should implement directly!
 
-💡 Best Practices for v delegation:
-   • Include concrete values: v[\`process \${args[0]}\`]() ✓ vs v["process data"]() ✗
-   • Always add Zod schema: v.task(value)(z.string()) for type safety
-   • Make sub-tasks genuinely different from current task`;
+💡 Best Practices:
+   • Include concrete values: v[\`处理\${args[0]}\`]() ✓ not v["处理数据"]() ✗
+   • Always add Zod schema: (z.string()), (z.number()), (z.object({...}))
+   • Delegate creative tasks even if they seem "simple" - LLM is better at them`;
     }
     
     const userPrompt = `Generate a JavaScript function body for: "${functionName}"
@@ -157,17 +180,20 @@ ${strategyGuidance}
 - Access arguments via args array: args[0], args[1], etc.
 - Return the result directly (use 'return' statement)
 - Async/await is supported
+- Write robust code: check bounds, handle edge cases, use safe operators
 - DO NOT include function declaration wrapper
 - DO NOT include markdown code fences
 
 ✅ GOOD examples:
    return args[0] + args[1];
    return \`Hello \${args[0]}\`;
+   const char = line[x] || ' '; // Safe: handle undefined
    const result = args[0] * 2; return result;
 
 ❌ BAD examples:
    function ${functionName}(args) { return args[0]; }  // NO function wrapper!
    \`\`\`javascript ... \`\`\`  // NO markdown!
+   const char = line[x]; char.repeat(2); // Unsafe: char might be undefined!
 
 ⚠️  Return ONLY the executable function body code.`;
 
@@ -202,6 +228,59 @@ ${strategyGuidance}
         totalTokens: response.usage.total_tokens,
       } : undefined,
     };
+  }
+
+  /**
+   * 将 Zod schema 转换为易读的描述
+   */
+  private describeSchema(schema: z.ZodType<unknown>): string {
+    const schemaAny = schema as any;
+    const typeName = schemaAny._def?.typeName;
+    
+    switch (typeName) {
+      case 'ZodString':
+        return 'string';
+      case 'ZodNumber':
+        return 'number';
+      case 'ZodBoolean':
+        return 'boolean';
+      case 'ZodDate':
+        return 'Date';
+      case 'ZodArray':
+        try {
+          const elementType = this.describeSchema(schemaAny._def.type);
+          return `${elementType}[]`;
+        } catch {
+          return 'array';
+        }
+      case 'ZodObject':
+        try {
+          const shape = schemaAny._def.shape();
+          const props = Object.entries(shape)
+            .map(([key, value]) => `${key}: ${this.describeSchema(value as z.ZodType<unknown>)}`)
+            .join(', ');
+          return `{ ${props} }`;
+        } catch {
+          return 'object';
+        }
+      case 'ZodUnion':
+      case 'ZodEnum':
+        return 'union';
+      case 'ZodOptional':
+        try {
+          return `${this.describeSchema(schemaAny._def.innerType)}?`;
+        } catch {
+          return 'optional';
+        }
+      case 'ZodNullable':
+        try {
+          return `${this.describeSchema(schemaAny._def.innerType)} | null`;
+        } catch {
+          return 'nullable';
+        }
+      default:
+        return 'any';
+    }
   }
 
   /**
