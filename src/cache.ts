@@ -8,9 +8,11 @@ import { CacheKey, CacheItem } from './types.js';
  */
 export class FunctionCacheManager {
   private cacheDir: string;
+  private reviewDir: string;
 
   constructor(cacheDir: string) {
     this.cacheDir = cacheDir;
+    this.reviewDir = join(cacheDir, 'review');
   }
 
   /**
@@ -18,6 +20,7 @@ export class FunctionCacheManager {
    */
   async init(): Promise<void> {
     await fs.mkdir(this.cacheDir, { recursive: true });
+    await fs.mkdir(this.reviewDir, { recursive: true });
   }
 
   /**
@@ -57,6 +60,24 @@ export class FunctionCacheManager {
     await this.init();
     const cachePath = this.getCachePath(key);
     await fs.writeFile(cachePath, JSON.stringify(item), 'utf-8');
+    
+    // 在 review 目录中生成可预览的 js 文件
+    await this.writeReviewFile(key.functionName, item.code);
+  }
+
+  /**
+   * 生成可预览的 JS 文件到 review 目录
+   */
+  private async writeReviewFile(functionName: string, code: string): Promise<void> {
+    try {
+      const reviewPath = join(this.reviewDir, `${functionName}.js`);
+      const wrappedCode = `function ${functionName}(args, v, z) {
+${code}
+}`;
+      await fs.writeFile(reviewPath, wrappedCode, 'utf-8');
+    } catch (error) {
+      console.error(`Failed to write review file for ${functionName}:`, error);
+    }
   }
 
   /**
@@ -64,5 +85,6 @@ export class FunctionCacheManager {
    */
   async clear(): Promise<void> {
     await fs.rm(this.cacheDir, { recursive: true, force: true });
+    // review 目录会在 cacheDir 下一起删除
   }
 }
