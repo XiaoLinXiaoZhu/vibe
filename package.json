@@ -13,6 +13,7 @@
   },
   "scripts": {
     "test": "bun run src/tests/index.ts",
+    "playground": "bun run src/examples/playground.ts",
     "build": "tsc"
   },
   "keywords": [
@@ -25,8 +26,9 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "zod": "^3.22.4",
-    "openai": "^4.20.0"
+    "@types/jest": "^30.0.0",
+    "openai": "^4.20.0",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
