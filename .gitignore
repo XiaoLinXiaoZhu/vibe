@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.vibe/
+*.log
+.DS_Store
+.env
