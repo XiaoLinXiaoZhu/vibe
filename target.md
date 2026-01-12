@@ -15,14 +15,13 @@ const v = createVibe(config);
 
 #### 普通函数调用：
 
-它具有以下特性：
 1. 任何函数和任何参数都可以，vibe 会调用 LLM 生成 JavaScript 代码，并且将其作为函数实现执行。
 2. `v` 下面所有的属性都是 AI 函数，包括中文函数名。
 3. 每个函数都是纯函数，不会修改任何外部状态。
 4. vibe 拥有缓存（.vibe/cache），可以缓存函数实现，从而同一函数在多次调用时，不会重复调用 LLM。
 
 ```typescript
-v.anyFunctionName(anyargs);
+v.add(5, 3);
 v.加法(5, 3);
 v.将emoji转化为字符画("👀", "200", "200");
 ```
@@ -31,18 +30,19 @@ v.将emoji转化为字符画("👀", "200", "200");
 
 ```typescript
 // 使用链式调用，第二个括号传入 zod schema
-v.anyFunctionName(anyargs)(zodSchema);  // 返回 zodSchema 的类型
+v.add(5, 3)(z.number());
 
 // 或者使用 .withSchema 方法
-v.anyFunctionName(anyargs).withSchema(zodSchema);
+v.add(5, 3).withSchema(z.number());
 ```
 
 #### 使用装饰器（运行时会自动修改函数实现）：
+
 ```typescript
 @VibeClass()
-class MyClass {
+class Calculator {
   @vibeFn
-  myMethod(args) {
+  multiply(a: number, b: number): any {
     return;
   }
 }

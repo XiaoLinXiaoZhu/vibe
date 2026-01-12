@@ -131,10 +131,10 @@ const v = createVibe({
 });
 ```
 
-## 运行示例
+## 构建项目
 
 ```bash
-bun run example
+bun run build
 ```
 
 ## 运行测试
@@ -142,6 +142,14 @@ bun run example
 ```bash
 bun run test
 ```
+
+测试套件包括：
+- 基础功能测试（加法、减法、乘法、字符串处理）
+- 链式调用测试（带/不带 schema）
+- 中文函数名测试
+- 缓存功能测试
+- 装饰器测试
+- 实用方法测试
 
 ## 构建
 

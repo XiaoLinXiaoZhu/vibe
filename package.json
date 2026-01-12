@@ -12,11 +12,7 @@
     }
   },
   "scripts": {
-    "example": "bun run src/example.ts",
-    "test": "bun run src/test.ts",
-    "chained-example": "bun run src/chained-example.ts",
-    "log-example": "bun run src/log-example.ts",
-    "test-llm-log": "bun run src/test-llm-log.ts",
+    "test": "bun run src/tests/index.ts",
     "build": "tsc"
   },
   "keywords": [

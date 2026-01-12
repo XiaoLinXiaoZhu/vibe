@@ -164,20 +164,11 @@ export class vibe {
   private createProxy(): ProxyHandler<FunctionCallBuilder> {
     const self = this;
     return {
-      get(target, prop: string) {
-        // 返回一个 FunctionCallBuilder
+      get(_target, prop: string) {
         return (...args: unknown[]) => {
           const builder = new FunctionCallBuilder(self, prop, args);
-          
-          // 使其可调用和可 await
           return new Proxy(builder, {
-            apply: (_target, _thisArg, argumentsList) => {
-              // 如果被调用时传入了参数（schema），则使用 schema
-              if (argumentsList.length > 0 && argumentsList[0]) {
-                return builder.__call(argumentsList[0]);
-              }
-              return builder.__call();
-            },
+            apply: (_t, _this, [schema]) => builder.__call(schema),
           }) as any;
         };
       },
