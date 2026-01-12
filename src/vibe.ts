@@ -163,10 +163,10 @@ export class vibe {
           return undefined;
         }
         
-        return (...args: unknown[]) => {
-          const builder = new FunctionCallBuilder(instance, String(prop), args, originalProxy, depth);
+        return <T = unknown>(...args: unknown[]) => {
+          const builder = new FunctionCallBuilder<T>(instance, String(prop), args, originalProxy, depth);
           
-          const callableFunction = function(schema?: z.ZodType<unknown>) {
+          const callableFunction = function(schema?: z.ZodType<T>) {
             return builder.__call(schema);
           };
           
@@ -206,14 +206,25 @@ export class vibe {
 }
 
 /**
+ * Vibe 实例类型
+ */
+export type VibeInstance = {
+  [key: string]: <T = unknown>(...args: unknown[]) => FunctionCallBuilder<T> & {
+    (schema?: z.ZodType<T>): Promise<T>;
+    withSchema: <S>(schema: z.ZodType<S>) => Promise<S>;
+  };
+};
+
+/**
  * 创建并返回 vibe 实例的便捷函数
  * 支持多种调用方式：
  * - v.functionName(args)
  * - v["functionName"](args)
  * - v.functionName(args)(schema)
  * - v["functionName"](args)(schema)
+ * - v.functionName<T>(args)(schema)
  */
-export function createVibe(config: VibeConfig = {}): any {
+export function createVibe(config: VibeConfig = {}): VibeInstance {
   const instance = new vibe(config);
   const vibeProxy = new Proxy(instance, {
     get(_target, prop: string | symbol) {
@@ -222,11 +233,11 @@ export function createVibe(config: VibeConfig = {}): any {
         return undefined;
       }
       
-      return (...args: unknown[]) => {
-        const builder = new FunctionCallBuilder(instance, String(prop), args, vibeProxy, 0);
+      return <T = unknown>(...args: unknown[]) => {
+        const builder = new FunctionCallBuilder<T>(instance, String(prop), args, vibeProxy, 0);
         
         // 创建一个函数作为 Proxy 的 target，这样 apply trap 才能工作
-        const callableFunction = function(schema?: z.ZodType<unknown>) {
+        const callableFunction = function(schema?: z.ZodType<T>) {
           return builder.__call(schema);
         };
         
@@ -242,7 +253,7 @@ export function createVibe(config: VibeConfig = {}): any {
       };
     },
   });
-  return vibeProxy;
+  return vibeProxy as unknown as VibeInstance;
 }
 
 /**

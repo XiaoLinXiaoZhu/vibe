@@ -6,51 +6,51 @@ import type { vibe } from './vibe.js';
  * 支持链式调用：v.函数名(参数) 或 v.函数名(参数)(schema)
  * 实现 PromiseLike 接口，可以被 await
  */
-export class FunctionCallBuilder {
+export class FunctionCallBuilder<T = unknown> {
   constructor(
     private vibeInstance: vibe,
     private functionName: string,
     private args: unknown[],
     private vibeProxy?: any,
     private depth: number = 0,
-    private outputSchema?: z.ZodType<unknown>
+    private outputSchema?: z.ZodType<T>
   ) {}
 
-  withSchema<T extends z.ZodType<unknown>>(schema: T): Promise<unknown> {
-    this.outputSchema = schema;
-    return this.execute();
+  withSchema<S>(schema: z.ZodType<S>): Promise<S> {
+    this.outputSchema = schema as any;
+    return this.execute() as unknown as Promise<S>;
   }
 
-  async __call(schema?: z.ZodType<unknown>): Promise<unknown> {
-    if (schema) this.outputSchema = schema;
-    return this.execute();
+  async __call<S>(schema?: z.ZodType<S>): Promise<S extends undefined ? T : S> {
+    if (schema) this.outputSchema = schema as any;
+    return this.execute() as any;
   }
 
   // 实现 PromiseLike，使其可以被 await
-  then<TResult1 = unknown, TResult2 = never>(
-    onfulfilled?: ((value: unknown) => TResult1 | PromiseLike<TResult1>) | null,
+  then<TResult1 = T, TResult2 = never>(
+    onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null
   ): Promise<TResult1 | TResult2> {
-    return this.execute().then(onfulfilled, onrejected);
+    return this.execute().then(onfulfilled as any, onrejected);
   }
 
   catch<TResult = never>(
     onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null
-  ): Promise<unknown | TResult> {
+  ): Promise<T | TResult> {
     return this.execute().catch(onrejected);
   }
 
-  finally(onfinally?: (() => void) | null): Promise<unknown> {
+  finally(onfinally?: (() => void) | null): Promise<T> {
     return this.execute().finally(onfinally);
   }
 
-  private execute(): Promise<unknown> {
+  private execute(): Promise<T> {
     return this.vibeInstance.handleCall(
       this.functionName,
       this.args,
       this.outputSchema,
       this.vibeProxy,
       this.depth
-    );
+    ) as Promise<T>;
   }
 }
