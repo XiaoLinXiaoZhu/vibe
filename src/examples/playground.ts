@@ -5,5 +5,5 @@ import { z } from "zod";
 const v = createVibe();
 
 console.log(
-    await v.explain("ROM-COM MOMENT","chinese")(z.string())
+    await v.explain("捧腹大笑","english")(z.string())
 );

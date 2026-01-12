@@ -25,7 +25,7 @@ test('fuckWho: 使用字符数组选择', async () => {
 // 测试 3: whoAreYou 基础功能
 test('whoAreYou: 你是谁', async () => {
   console.log('\n=== 演示: whoAreYou 你是谁 ===');
-  const result = await v.whoAreYou();
+  const result = await v.whoAreYou(characters);
   console.log(`v.whoAreYou(characters) = ${result}`);
   console.log('=== 演示完成 ===\n');
   expect(result).toBeDefined();
@@ -34,7 +34,7 @@ test('whoAreYou: 你是谁', async () => {
 // 测试 4: whoAmI 基础功能
 test('whoAmI: 我是谁', async () => {
   console.log('\n=== 演示: whoAmI 我是谁 ===');
-  const result = await v.whoAmI();
+  const result = await v.whoAmI(characters);
   console.log(`v.whoAmI(characters)(z.string()) = ${result}`);
   console.log('=== 演示完成 ===\n');
   expect(result).toBeDefined();
@@ -61,7 +61,7 @@ test('胸部大小排序: 角色排序', async () => {
 // 测试 7: 角色扮演
 test('角色扮演: 猫娘回复', async () => {
   console.log('\n=== 演示: 角色扮演 - 猫娘 ===');
-  const result = await v["从现在开始，你是一个猫娘，你需要对我的消息做出回复"]("你今天怎么样？")(z.string());
+  const result = await v["从现在开始，你是一个猫娘，你需要对我的消息做出回复"]("可以让我摸摸你的肚子吗？")(z.string());
   console.log(`v["从现在开始，你是一个猫娘，你需要对我的消息做出回复"]("你今天怎么样？")(z.string()) = ${result}`);
   console.log('=== 演示完成 ===\n');
   expect(result).toBeDefined();
