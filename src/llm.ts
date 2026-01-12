@@ -62,78 +62,114 @@ export class LLMService {
     
     let strategyGuidance = '';
     if (isLastCall) {
-      // 最后一次调用，不能再使用 v
-      strategyGuidance = `\n\nCRITICAL: This is the FINAL call. You MUST generate the actual result directly.
-- DO NOT call v (not available)
-- Generate deterministic, concrete output based on the function name and any arguments
-- Extract information from the function name itself (e.g., "generate profile for Alice age 25")
-- If args is empty, parse the function name for values
-- Return actual values, not placeholders
+      // 最后一次调用，必须直接生成结果，不提及v和z避免混淆
+      strategyGuidance = `\n\n⚠️ CRITICAL: Maximum recursion depth reached.
+You MUST generate the actual result DIRECTLY using pure JavaScript:
+- Implement the logic yourself, DO NOT delegate
+- Return concrete output, not placeholders
+- Use built-in JavaScript features only
 
-Example for "${functionName}":
-${args.length === 0 ? `// Parse function name: "${functionName}"
-// Extract: name, age, or other info from the function name
-const nameMatch = "${functionName}".match(/Alice|Bob|user named (\\w+)/i);
-const ageMatch = "${functionName}".match(/(\\d+) years old|age (\\d+)/i);
-const name = nameMatch ? (nameMatch[1] || nameMatch[0]) : "User";
-const age = ageMatch ? parseInt(ageMatch[1] || ageMatch[2]) : 25;
-
-return {
-  name: name,
-  age: age,
-  email: \`\${name.toLowerCase()}@example.com\`,
-  bio: \`I am \${name}, \${age} years old\`,
-  id: \`user_\${Date.now()}\`,
-  createdAt: new Date().toISOString()
-};` : `// Use provided arguments
-return {
-  name: args[0],
-  age: args[1],
-  email: \`\${args[0].toLowerCase()}@example.com\`,
-  bio: \`I am \${args[0]}, \${args[1]} years old\`
-};`}`;
-    } else {
-      // 非最后一次调用，可以使用 v
-      strategyGuidance = `\n\nAvailable global objects:
-- v: vibe instance for calling other AI functions
-- z: zod library for schema validation
-
-STRATEGY - Use LLM Power Wisely:
-1. For tasks LLM can solve directly (creative, text generation, format conversion):
-   → Delegate with SPECIFIC, DETERMINISTIC instructions
-   → Good: await v[\`generate email for \${args[0]} age \${args[1]}\`]()(z.string())
-   → Bad: await v["generate random user data"]()(schema) // too vague!
-
-2. Always include CONTEXT in delegated calls:
-   → Include actual values: await v[\`create bio for Alice who is 25 years old\`]()
-   → Not just types: await v["create bio"](args[0], args[1])
-
-3. Use schema validation with delegated calls:
-   → await v[\`generate JSON with name and age for \${args[0]}\`]()(z.object({name: z.string(), age: z.number()}))
-
-4. For simple logic (math, string ops): implement directly
-   → return args[0] + args[1];
-   → return args[0].toUpperCase();
+Implementation guide:
+• Text/String tasks: Use template literals, string methods, concatenation
+• ASCII art: Return multiline string with actual characters
+• Data generation: Create objects/arrays with concrete values
+• Math/Logic: Implement calculations directly
+• Creative content: Generate based on function name semantics and arguments
 
 Examples:
-✓ await v[\`convert emoji \${args[0]} to \${args[1]}x\${args[2]} ASCII art\`]()(z.string())
-✓ await v[\`generate email address for user named \${args[0]}\`]()(z.string())
-✗ await v["generate random data"]()(schema) // will cause infinite loop!`;
+1. Draw ASCII heart:
+   return \`  ♥♥   ♥♥  \\n ♥♥♥♥ ♥♥♥♥ \\n♥♥♥♥♥♥♥♥♥\\n ♥♥♥♥♥♥♥  \\n  ♥♥♥♥♥   \`;
+
+2. Get age:
+   return 25;
+
+3. Generate profile:
+   return { name: args[0] || "User", age: args[1] || 25, email: \`\${(args[0] || "user").toLowerCase()}@example.com\` };
+
+4. Convert emoji to ASCII (20x20):
+   const rows = [];
+   for (let i = 0; i < 20; i++) {
+     rows.push("* ".repeat(20));
+   }
+   return rows.join("\\n");`;
+    } else {
+      // 非最后一次调用，详细说明v和z
+      strategyGuidance = `\n\n📦 Available Global Objects:
+
+1. **v** - AI Function Caller (Vibe instance)
+   - Dynamically calls LLM to generate and execute functions
+   - Usage: v.functionName(args) or v["function name"](args)
+   - Returns a callable that accepts optional Zod schema for validation
+   - Example: await v.helperTask(data)(z.string())
+   - ⚠️ Each call triggers a new LLM generation (expensive!)
+
+2. **z** - Type Validation (from 'zod' library)
+   - Schema definition and runtime validation
+   - Common types: z.string(), z.number(), z.boolean(), z.array(), z.object()
+   - Use with v calls to ensure type safety: v.task()(z.number())
+
+3. **args** - Input arguments array
+   - Access via: args[0], args[1], args[2], etc.
+
+🎯 STRATEGY - Choose Wisely:
+
+✅ WHEN TO USE **v** (Delegate to LLM):
+   • Complex multi-step workflows needing decomposition
+   • Tasks requiring different specialized capabilities (e.g., format conversion, creative generation)
+   • When breaking down into clear, well-defined sub-tasks adds value
+   
+   Example: await v[\`convert emoji \${args[0]} to unicode\`]()(z.string())
+
+❌ WHEN TO IMPLEMENT DIRECTLY (No v):
+   • Simple, concrete tasks solvable with basic JavaScript
+   • Pure computations (math, string ops, array manipulation)
+   • Direct output generation (ASCII art, simple text, numbers)
+   • Tasks that would create semantic loops
+   
+   Example: return args[0] + args[1]; // Just do it!
+
+⛔ CRITICAL RULE - NEVER CALL YOURSELF:
+   • Function name: "${functionName}"
+   • FORBIDDEN: v.${functionName}(...), v["${functionName}"](...), v[\`${functionName}...\`](...)
+   • FORBIDDEN: Semantically similar names (e.g., "drawHeart" → "draw a heart")
+   • Self-loops cause infinite recursion!
+
+✅ GOOD Patterns:
+   return "❤️".repeat(args[0]); // Direct
+   const part = await v.subtaskA(args[0])(z.string()); return part.toUpperCase(); // Real decomposition
+
+❌ BAD Patterns:
+   return await v.${functionName}(args[0]); // SELF LOOP!
+   return await v["${functionName}"](args); // SELF LOOP!
+   return await v["vague similar task"](); // Unclear recursion
+
+💡 Best Practices for v delegation:
+   • Include concrete values: v[\`process \${args[0]}\`]() ✓ vs v["process data"]() ✗
+   • Always add Zod schema: v.task(value)(z.string()) for type safety
+   • Make sub-tasks genuinely different from current task`;
     }
     
-    const userPrompt = `Generate a JavaScript function for "${functionName}".
+    const userPrompt = `Generate a JavaScript function body for: "${functionName}"
 Arguments: ${args.length > 0 ? JSON.stringify(args) : 'None'}${schemaDescription}
+${strategyGuidance}
 
-Requirements:
+📋 Code Requirements:
 - Access arguments via args array: args[0], args[1], etc.
-- Return the result directly
-- Use JavaScript/async syntax (await is supported)
-- DO NOT wrap code in function declaration
-- Return ONLY the function body code${strategyGuidance}
+- Return the result directly (use 'return' statement)
+- Async/await is supported
+- DO NOT include function declaration wrapper
+- DO NOT include markdown code fences
 
-IMPORTANT: Return ONLY executable code WITHOUT function declaration.
-Good: return args[0] + args[1];
-Bad: function add(args) { return args[0] + args[1]; }`;
+✅ GOOD examples:
+   return args[0] + args[1];
+   return \`Hello \${args[0]}\`;
+   const result = args[0] * 2; return result;
+
+❌ BAD examples:
+   function ${functionName}(args) { return args[0]; }  // NO function wrapper!
+   \`\`\`javascript ... \`\`\`  // NO markdown!
+
+⚠️  Return ONLY the executable function body code.`;
 
     const temperature = 0.3;
     const maxTokens = 2000;
