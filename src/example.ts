@@ -1,4 +1,4 @@
-import { vibe, createVibe, vibeFn, VibeClass } from './index.js';
+import { createVibe, vibeUtils, VibeClass, vibeFn } from './index.js';
 import { z } from 'zod';
 
 console.log('=== Vibe 示例 ===\n');
@@ -27,17 +27,17 @@ const personSchema = z.object({
 });
 
 console.log('\n调用 v.createPerson("Alice", 25) 并使用 zod 验证');
-const personResult = await v.createPerson('Alice', 25);
-const validatedPerson = personSchema.parse(personResult);
-console.log('验证通过:', validatedPerson);
+const personResult = await v.createPerson('Alice', 25)(personSchema);
+console.log('验证通过:', personResult);
 
-// 使用 vibe 实例的 withSchema 方法
-console.log('\n使用 v.withSchema(personSchema, "createPerson", "Bob", 30)');
-const person2 = await v.withSchema(personSchema, 'createPerson', 'Bob', 30);
-console.log('结果:', person2);
+// 示例 3: 使用中文函数名
+console.log('\n\n示例 3: 使用中文函数名');
+console.log('调用 v.将emoji转化为字符画("👀", "200", "200")');
+const asciiArt = await v.将emoji转化为字符画('👀', '200', '200')(z.string());
+console.log('结果:', asciiArt);
 
-// 示例 3: 使用装饰器
-console.log('\n\n示例 3: 使用装饰器');
+// 示例 4: 使用装饰器
+console.log('\n\n示例 4: 使用装饰器');
 
 @VibeClass()
 class Calculator {
@@ -62,5 +62,15 @@ console.log(`结果: ${product}`);
 console.log('\n调用 calc.factorial(5)');
 const fact = await calc.factorial(5);
 console.log(`结果: ${fact}`);
+
+// 示例 5: 使用 vibeUtils
+console.log('\n\n示例 5: 使用 vibeUtils');
+console.log('读取日志');
+const logs = await vibeUtils.readLogs();
+console.log(`找到 ${logs.length} 条日志记录`);
+
+console.log('\n清除缓存');
+await vibeUtils.clearCache();
+console.log('缓存已清除');
 
 console.log('\n\n=== 示例完成 ===');

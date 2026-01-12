@@ -1,4 +1,4 @@
-import { vibe, createVibe, VibeClass, vibeFn } from './index.js';
+import { createVibe, vibeUtils, VibeClass, vibeFn } from './index.js';
 import { z } from 'zod';
 
 console.log('=== Vibe 测试 ===\n');
@@ -26,7 +26,7 @@ async function testWithSchema() {
       sum: z.number(),
       product: z.number(),
     });
-    const result = await v.withSchema(schema, 'calculate', 5, 10);
+    const result = await v.calculate(5, 10)(schema);
     console.log('✓ 带类型验证的函数调用通过');
     console.log(`  结果:`, result);
   } catch (error) {
@@ -100,6 +100,61 @@ async function testStringProcessing() {
   }
 }
 
+// 测试 6: 中文函数名
+console.log('\n测试 6: 中文函数名');
+async function testChineseFunctionName() {
+  try {
+    const v = createVibe();
+    const result = await v.加法(5, 7)(z.number());
+    console.log('✓ 中文函数名测试通过');
+    console.log(`  结果: ${result}`);
+  } catch (error) {
+    console.error('✗ 中文函数名测试失败');
+    console.error(`  错误: ${error}`);
+  }
+}
+
+// 测试 7: 链式调用支持
+console.log('\n测试 7: 链式调用');
+async function testChainedCall() {
+  try {
+    const v = createVibe();
+    
+    // 不带 schema
+    const result1 = await v.add(3, 4);
+    console.log('  无 schema: ✓');
+    
+    // 带 schema
+    const result2 = await v.add(3, 4)(z.number());
+    console.log('  有 schema: ✓');
+    
+    console.log('✓ 链式调用测试通过');
+  } catch (error) {
+    console.error('✗ 链式调用测试失败');
+    console.error(`  错误: ${error}`);
+  }
+}
+
+// 测试 8: vibeUtils
+console.log('\n测试 8: vibeUtils');
+async function testVibeUtils() {
+  try {
+    const logs = await vibeUtils.readLogs();
+    console.log(`  读取日志: ${logs.length} 条 ✓`);
+    
+    await vibeUtils.clearCache();
+    console.log('  清除缓存: ✓');
+    
+    await vibeUtils.clearLogs();
+    console.log('  清除日志: ✓');
+    
+    console.log('✓ vibeUtils 测试通过');
+  } catch (error) {
+    console.error('✗ vibeUtils 测试失败');
+    console.error(`  错误: ${error}`);
+  }
+}
+
 // 运行所有测试
 (async () => {
   await testBasicFunctionCall();
@@ -107,5 +162,8 @@ async function testStringProcessing() {
   await testCache();
   await testDecorator();
   await testStringProcessing();
+  await testChineseFunctionName();
+  await testChainedCall();
+  await testVibeUtils();
   console.log('\n=== 测试完成 ===');
 })();

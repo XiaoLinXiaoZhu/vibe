@@ -8,6 +8,8 @@
 - 💾 **智能缓存**: 自动缓存函数实现，避免重复调用 LLM
 - 🔒 **类型安全**: 支持 Zod 进行输出类型验证（不依赖 TypeScript）
 - 🎯 **灵活调用**: 支持普通函数调用、带类型验证调用、装饰器使用
+- 🌍 **中文支持**: 支持中文函数名和参数
+- 📊 **完整日志**: 记录所有 LLM 调用的请求和响应
 - ⚙️ **可配置**: 支持环境变量和自定义配置
 
 ## 安装
@@ -43,6 +45,10 @@ console.log(result); // 8
 
 const reversed = await v.reverseString('hello');
 console.log(reversed); // 'olleh'
+
+// 中文函数名
+const sum = await v.加法(10, 20);
+console.log(sum); // 30
 ```
 
 ### 2. 带类型验证（使用 Zod）
@@ -59,14 +65,12 @@ const personSchema = z.object({
   email: z.string().email(),
 });
 
-// 使用 withSchema 方法
-const person = await v.withSchema(
-  personSchema,
-  'createPerson',
-  'Alice',
-  25
-);
+// 使用链式调用进行类型验证
+const person = await v.createPerson('Alice', 25)(personSchema);
 console.log(person); // { name: 'Alice', age: 25, email: '...' }
+
+// 或者使用 withSchema 方法
+const person2 = await v.createPerson('Bob', 30).withSchema(personSchema);
 ```
 
 ### 3. 使用装饰器
@@ -93,7 +97,27 @@ const result = await calc.multiply(6, 7); // 42
 const fact = await calc.factorial(5); // 120
 ```
 
-### 4. 使用自定义配置
+### 4. 实用方法
+
+```typescript
+import { createVibe, vibeUtils } from 'vibe';
+
+const v = createVibe();
+
+// 清除缓存
+await vibeUtils.clearCache();
+
+// 读取日志
+const logs = await vibeUtils.readLogs();
+
+// 读取特定日期的日志
+const logsToday = await vibeUtils.readLogs('2026-01-12');
+
+// 清空日志
+await vibeUtils.clearLogs();
+```
+
+### 5. 使用自定义配置
 
 ```typescript
 import { createVibe } from 'vibe';
@@ -155,7 +179,7 @@ bun run build
 可以手动清除缓存：
 
 ```typescript
-await v.clearCache();
+await vibeUtils.clearCache();
 ```
 
 ### 日志记录

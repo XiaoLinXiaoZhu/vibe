@@ -1,6 +1,7 @@
 import { CacheManager } from './cache.js';
 import { LLMService } from './llm.js';
 import { Logger, LogEntry } from './logger.js';
+import { FunctionCallBuilder } from './builder.js';
 import { mergeConfig } from './config.js';
 import type { VibeConfig, CacheKey } from './types.js';
 import type { z } from 'zod';
@@ -158,52 +159,47 @@ export class vibe {
   }
 
   /**
-   * Proxy handler
+   * Proxy handler - 所有属性访问都返回 AI 函数
    */
-  private createProxy(): ProxyHandler<vibe> {
+  private createProxy(): ProxyHandler<FunctionCallBuilder> {
     const self = this;
     return {
       get(target, prop: string) {
-        if (prop in target) {
-          // 返回实例方法
-          return target[prop as keyof vibe];
-        }
-
-        // 返回一个函数，接受参数并执行
-        return async (...args: unknown[]) => {
-          return self.handleCall(prop, args);
+        // 返回一个 FunctionCallBuilder
+        return (...args: unknown[]) => {
+          const builder = new FunctionCallBuilder(self, prop, args);
+          
+          // 使其可调用和可 await
+          return new Proxy(builder, {
+            apply: (_target, _thisArg, argumentsList) => {
+              // 如果被调用时传入了参数（schema），则使用 schema
+              if (argumentsList.length > 0 && argumentsList[0]) {
+                return builder.__call(argumentsList[0]);
+              }
+              return builder.__call();
+            },
+          }) as any;
         };
       },
     };
   }
 
   /**
-   * 创建一个接受 zod schema 的函数
-   */
-  withSchema<T extends z.ZodType<unknown>>(
-    schema: T,
-    functionName: string,
-    ...args: unknown[]
-  ): Promise<z.infer<T>> {
-    return this.handleCall(functionName, args, schema) as Promise<z.infer<T>>;
-  }
-
-  /**
-   * 清除缓存
+   * 清除缓存（内部方法）
    */
   async clearCache(): Promise<void> {
     await this.cache.clear();
   }
 
   /**
-   * 读取日志
+   * 读取日志（内部方法）
    */
   async readLogs(date?: string): Promise<LogEntry[]> {
     return this.logger.readLogs(date);
   }
 
   /**
-   * 清空日志
+   * 清空日志（内部方法）
    */
   async clearLogs(): Promise<void> {
     await this.logger.clearLogs();
@@ -248,6 +244,37 @@ export function VibeClass(config: VibeConfig = {}) {
 /**
  * 创建并返回 vibe 实例的便捷函数
  */
-export function createVibe(config: VibeConfig = {}): vibe {
-  return new Proxy(new vibe(config), (new vibe(config)).createProxy());
+export function createVibe(config: VibeConfig = {}): any {
+  const instance = new vibe(config);
+  return new Proxy(instance, instance.createProxy());
 }
+
+/**
+ * Vibe 实用方法对象
+ * 提供 clearCache, readLogs 等工具方法
+ */
+export const vibeUtils = {
+  /**
+   * 清除所有缓存
+   */
+  clearCache: (config: VibeConfig = {}) => {
+    const instance = new vibe(config);
+    return instance.clearCache();
+  },
+
+  /**
+   * 读取日志
+   */
+  readLogs: (date?: string, config: VibeConfig = {}) => {
+    const instance = new vibe(config);
+    return instance.readLogs(date);
+  },
+
+  /**
+   * 清空所有日志
+   */
+  clearLogs: (config: VibeConfig = {}) => {
+    const instance = new vibe(config);
+    return instance.clearLogs();
+  },
+};
