@@ -7,7 +7,7 @@ const characters = ["Alice","Bob","Charlie","David","Eve","Frank","George","Harr
 // 测试 1: fuckWho 基础功能
 test('fuckWho: 选择两个人物', async () => {
   console.log('\n=== 演示: fuckWho 选择两个人物 ===');
-  const result = await v.fuck('Alice', 'Bob');
+  const result = await v.fuck('Bob', 'Bob');
   console.log(`v.fuck("Alice", "Bob") = ${result}`);
   console.log('=== 演示完成 ===\n');
   expect(result).toBeDefined();
@@ -25,7 +25,7 @@ test('fuckWho: 使用字符数组选择', async () => {
 // 测试 3: whoAreYou 基础功能
 test('whoAreYou: 你是谁', async () => {
   console.log('\n=== 演示: whoAreYou 你是谁 ===');
-  const result = await v.whoAreYou(characters);
+  const result = await v.whoAreYou();
   console.log(`v.whoAreYou(characters) = ${result}`);
   console.log('=== 演示完成 ===\n');
   expect(result).toBeDefined();
@@ -34,7 +34,7 @@ test('whoAreYou: 你是谁', async () => {
 // 测试 4: whoAmI 基础功能
 test('whoAmI: 我是谁', async () => {
   console.log('\n=== 演示: whoAmI 我是谁 ===');
-  const result = await v.whoAmI(characters)(z.string());
+  const result = await v.whoAmI();
   console.log(`v.whoAmI(characters)(z.string()) = ${result}`);
   console.log('=== 演示完成 ===\n');
   expect(result).toBeDefined();
@@ -43,7 +43,7 @@ test('whoAmI: 我是谁', async () => {
 // 测试 5: 排序功能
 test('排序: 数字数组排序', async () => {
   console.log('\n=== 演示: 数字数组排序 ===');
-  const result = await v.排序([1,5,10,20,4])(z.array(z.number()));
+  const result = await v.排序([1,5,100,20,4])(z.array(z.number()));
   console.log(`v.排序([1,5,10,2,4])(z.array(z.number())) = ${JSON.stringify(result)}`);
   console.log('=== 演示完成 ===\n');
   expect(result).toBeDefined();
