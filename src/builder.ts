@@ -10,16 +10,17 @@ export class FunctionCallBuilder {
     private vibeInstance: vibe,
     private functionName: string,
     private args: unknown[],
+    private vibeProxy?: any,
     private outputSchema?: z.ZodType<unknown>
   ) {}
 
   withSchema<T extends z.ZodType<unknown>>(schema: T): Promise<unknown> {
     this.outputSchema = schema;
-    return this.vibeInstance.handleCall(this.functionName, this.args, this.outputSchema);
+    return this.vibeInstance.handleCall(this.functionName, this.args, this.outputSchema, this.vibeProxy);
   }
 
   async __call(schema?: z.ZodType<unknown>): Promise<unknown> {
     if (schema) this.outputSchema = schema;
-    return this.vibeInstance.handleCall(this.functionName, this.args, this.outputSchema);
+    return this.vibeInstance.handleCall(this.functionName, this.args, this.outputSchema, this.vibeProxy);
   }
 }

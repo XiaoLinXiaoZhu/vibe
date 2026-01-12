@@ -5,6 +5,7 @@ import { FunctionCallBuilder } from './builder.js';
 import { mergeConfig } from './config.js';
 import type { VibeConfig, CacheKey } from './types.js';
 import type { z } from 'zod';
+import * as zodNamespace from 'zod';
 
 /**
  * Vibe 主类
@@ -46,10 +47,15 @@ export class vibe {
 
   /**
    * 执行代码
+   * @param code 要执行的代码
+   * @param args 参数数组
+   * @param vibeProxy vibe 实例的 proxy，供代码中使用
    */
-  private executeCode(code: string, args: unknown[]): unknown {
-    const fn = new Function('args', `"use strict";\n${code}`);
-    return fn(args);
+  private async executeCode(code: string, args: unknown[], vibeProxy: any): Promise<unknown> {
+    // 使用 AsyncFunction 支持 await
+    const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+    const fn = new AsyncFunction('args', 'v', 'z', `"use strict";\n${code}`);
+    return await fn(args, vibeProxy, zodNamespace);
   }
 
   /**
@@ -69,7 +75,7 @@ export class vibe {
   /**
    * 核心方法：处理函数调用
    */
-  async handleCall(functionName: string, args: unknown[], outputSchema?: z.ZodType<unknown>): Promise<unknown> {
+  async handleCall(functionName: string, args: unknown[], outputSchema?: z.ZodType<unknown>, vibeProxy?: any): Promise<unknown> {
     const startTime = Date.now();
     const cacheKey = this.createCacheKey(functionName, args, outputSchema);
     
@@ -89,7 +95,7 @@ export class vibe {
       if (cached) {
         logEntry.fromCache = true;
         logEntry.code = cached.code;
-        const result = this.executeCode(cached.code, args);
+        const result = await this.executeCode(cached.code, args, vibeProxy);
         const finalResult = outputSchema ? this.validateOutput(result, outputSchema) : result;
         logEntry.result = finalResult;
         return finalResult;
@@ -113,7 +119,7 @@ export class vibe {
       };
 
       // 执行代码并验证
-      const result = this.executeCode(llmResult.code, args);
+      const result = await this.executeCode(llmResult.code, args, vibeProxy);
       const finalResult = outputSchema ? this.validateOutput(result, outputSchema) : result;
 
       // 缓存结果
@@ -187,19 +193,30 @@ export function VibeClass(config: VibeConfig = {}) {
 
 /**
  * 创建并返回 vibe 实例的便捷函数
+ * 支持多种调用方式：
+ * - v.functionName(args)
+ * - v["functionName"](args)
+ * - v.functionName(args)(schema)
+ * - v["functionName"](args)(schema)
  */
 export function createVibe(config: VibeConfig = {}): any {
   const instance = new vibe(config);
-  return new Proxy(instance, {
-    get(_target, prop: string) {
+  const vibeProxy = new Proxy(instance, {
+    get(_target, prop: string | symbol) {
+      // 跳过 Symbol 属性和内部属性
+      if (typeof prop === 'symbol' || prop === 'then' || prop === 'constructor') {
+        return undefined;
+      }
+      
       return (...args: unknown[]) => {
-        const builder = new FunctionCallBuilder(instance, prop, args);
+        const builder = new FunctionCallBuilder(instance, String(prop), args, vibeProxy);
         return new Proxy(builder, {
           apply: (_t, _this, [schema]) => builder.__call(schema),
         });
       };
     },
   });
+  return vibeProxy;
 }
 
 /**

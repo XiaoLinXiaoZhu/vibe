@@ -61,10 +61,16 @@ export class LLMService {
 Arguments: ${args.length > 0 ? JSON.stringify(args) : 'None'}${schemaDescription}
 
 Requirements:
-- Pure function (no side effects)
 - Access arguments via args array: args[0], args[1], etc.
 - Return the result directly
-- Use only JavaScript syntax
+- Use JavaScript/async syntax (await is supported)
+
+Available global objects:
+- v: vibe instance for calling other AI functions (e.g., await v.otherFunction(args))
+- z: zod library for schema validation (e.g., z.string(), z.number(), z.object({...}))
+
+For complex tasks, you can compose functions by calling v recursively.
+Example: await v["helper function"](data)(z.string())
 
 Return ONLY executable code, nothing else.`;
 
