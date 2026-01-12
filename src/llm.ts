@@ -46,17 +46,81 @@ export class LLMService {
 
   /**
    * 生成函数实现代码
+   * @param isLastCall 是否是最后一次调用（达到最大深度）
    */
   async generateFunctionCode(
     functionName: string,
     args: unknown[],
-    outputSchema?: z.ZodType<unknown>
+    outputSchema?: z.ZodType<unknown>,
+    isLastCall: boolean = false
   ): Promise<LLMGenerateResult> {
     const schemaDescription = outputSchema
       ? `\nOutput schema: ${JSON.stringify(outputSchema)}\nThe output MUST satisfy this schema.`
       : '';
 
     const systemPrompt = 'You are a JavaScript expert. Generate clean, efficient JavaScript code. Return ONLY the function code, no markdown, no backticks.';
+    
+    let strategyGuidance = '';
+    if (isLastCall) {
+      // 最后一次调用，不能再使用 v
+      strategyGuidance = `\n\nCRITICAL: This is the FINAL call. You MUST generate the actual result directly.
+- DO NOT call v (not available)
+- Generate deterministic, concrete output based on the function name and any arguments
+- Extract information from the function name itself (e.g., "generate profile for Alice age 25")
+- If args is empty, parse the function name for values
+- Return actual values, not placeholders
+
+Example for "${functionName}":
+${args.length === 0 ? `// Parse function name: "${functionName}"
+// Extract: name, age, or other info from the function name
+const nameMatch = "${functionName}".match(/Alice|Bob|user named (\\w+)/i);
+const ageMatch = "${functionName}".match(/(\\d+) years old|age (\\d+)/i);
+const name = nameMatch ? (nameMatch[1] || nameMatch[0]) : "User";
+const age = ageMatch ? parseInt(ageMatch[1] || ageMatch[2]) : 25;
+
+return {
+  name: name,
+  age: age,
+  email: \`\${name.toLowerCase()}@example.com\`,
+  bio: \`I am \${name}, \${age} years old\`,
+  id: \`user_\${Date.now()}\`,
+  createdAt: new Date().toISOString()
+};` : `// Use provided arguments
+return {
+  name: args[0],
+  age: args[1],
+  email: \`\${args[0].toLowerCase()}@example.com\`,
+  bio: \`I am \${args[0]}, \${args[1]} years old\`
+};`}`;
+    } else {
+      // 非最后一次调用，可以使用 v
+      strategyGuidance = `\n\nAvailable global objects:
+- v: vibe instance for calling other AI functions
+- z: zod library for schema validation
+
+STRATEGY - Use LLM Power Wisely:
+1. For tasks LLM can solve directly (creative, text generation, format conversion):
+   → Delegate with SPECIFIC, DETERMINISTIC instructions
+   → Good: await v[\`generate email for \${args[0]} age \${args[1]}\`]()(z.string())
+   → Bad: await v["generate random user data"]()(schema) // too vague!
+
+2. Always include CONTEXT in delegated calls:
+   → Include actual values: await v[\`create bio for Alice who is 25 years old\`]()
+   → Not just types: await v["create bio"](args[0], args[1])
+
+3. Use schema validation with delegated calls:
+   → await v[\`generate JSON with name and age for \${args[0]}\`]()(z.object({name: z.string(), age: z.number()}))
+
+4. For simple logic (math, string ops): implement directly
+   → return args[0] + args[1];
+   → return args[0].toUpperCase();
+
+Examples:
+✓ await v[\`convert emoji \${args[0]} to \${args[1]}x\${args[2]} ASCII art\`]()(z.string())
+✓ await v[\`generate email address for user named \${args[0]}\`]()(z.string())
+✗ await v["generate random data"]()(schema) // will cause infinite loop!`;
+    }
+    
     const userPrompt = `Generate a JavaScript function for "${functionName}".
 Arguments: ${args.length > 0 ? JSON.stringify(args) : 'None'}${schemaDescription}
 
@@ -64,24 +128,8 @@ Requirements:
 - Access arguments via args array: args[0], args[1], etc.
 - Return the result directly
 - Use JavaScript/async syntax (await is supported)
-- DO NOT wrap code in function declaration (no "function name()" or "async function")
-- Return ONLY the function body code
-
-Available global objects:
-- v: vibe instance for calling other AI functions (e.g., await v.otherFunction(args))
-- z: zod library for schema validation (e.g., z.string(), z.number(), z.object({...}))
-
-IMPORTANT STRATEGY:
-When facing complex tasks, DO NOT implement complex algorithms or use unavailable libraries.
-Instead, leverage the POWER OF LLM by delegating to other AI functions via v.
-
-Examples:
-- For "emoji to ASCII art": return await v[\`将\${args[0]}转化为\${args[1] || 100}x\${args[2] || 100}字符画\`]()(z.string());
-- For "complex data processing": break into steps using v.step1(), v.step2(), etc.
-- For "creative tasks": delegate to descriptive function names that LLM can understand
-- For "format conversions": use v[\`convert \${format} to \${targetFormat}\`](data)
-
-Think: Can LLM generate this directly? If yes, use v! Don't write complex code.
+- DO NOT wrap code in function declaration
+- Return ONLY the function body code${strategyGuidance}
 
 IMPORTANT: Return ONLY executable code WITHOUT function declaration.
 Good: return args[0] + args[1];

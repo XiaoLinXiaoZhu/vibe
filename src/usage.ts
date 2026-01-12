@@ -1,4 +1,4 @@
-import { createVibe, vibeUtils, VibeClass, vibeFn } from './index.js';
+import { createVibe, vibeUtils } from './index.js';
 import { z } from 'zod';
 
 const v = createVibe();
@@ -36,16 +36,3 @@ console.log(result); // 21
 // 实用方法
 await vibeUtils.clearCache();
 const logs = await vibeUtils.readLogs();
-
-// 装饰器
-@VibeClass()
-class Calculator {
-  @vibeFn
-  multiply(a: number, b: number): any {
-    return;
-  }
-}
-
-const calc = new Calculator();
-const product = await calc.multiply(6, 7);
-console.log(product); // 42

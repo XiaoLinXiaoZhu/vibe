@@ -1,4 +1,4 @@
-export { vibe, createVibe, vibeFn, VibeClass, vibeUtils } from './vibe.js';
+export { vibe, createVibe, vibeUtils } from './vibe.js';
 export type { VibeConfig, CacheKey, CacheItem } from './types.js';
 export { mergeConfig } from './config.js';
 export { FunctionCacheManager as CacheManager } from './cache.js';

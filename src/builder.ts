@@ -12,6 +12,7 @@ export class FunctionCallBuilder {
     private functionName: string,
     private args: unknown[],
     private vibeProxy?: any,
+    private depth: number = 0,
     private outputSchema?: z.ZodType<unknown>
   ) {}
 
@@ -48,7 +49,8 @@ export class FunctionCallBuilder {
       this.functionName,
       this.args,
       this.outputSchema,
-      this.vibeProxy
+      this.vibeProxy,
+      this.depth
     );
   }
 }

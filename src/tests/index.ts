@@ -2,7 +2,6 @@ import { testBasic } from './basic.test.js';
 import { testChained } from './chained.test.js';
 import { testChinese } from './chinese.test.js';
 import { testCache } from './cache.test.js';
-import { testDecorator } from './decorator.test.js';
 import { testUtils } from './utils.test.js';
 
 console.log('\n╔══════════════════════════════════════════╗');
@@ -15,7 +14,6 @@ async function runTests() {
     await testChained();
     await testChinese();
     await testCache();
-    await testDecorator();
     await testUtils();
 
     console.log('\n╔══════════════════════════════════════════╗');

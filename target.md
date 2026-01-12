@@ -61,18 +61,6 @@ v.add(5, 3).withSchema(z.number());
 v["add"](5, 3).withSchema(z.number());
 ```
 
-#### 使用装饰器（运行时会自动修改函数实现）：
-
-```typescript
-@VibeClass()
-class Calculator {
-  @vibeFn
-  multiply(a: number, b: number): any {
-    return;
-  }
-}
-```
-
 #### 全局对象（AI 代码中可用）：
 
 AI 生成的代码在执行时可以访问以下全局对象：

@@ -50,13 +50,16 @@ export class vibe {
    * @param code 要执行的代码
    * @param args 参数数组
    * @param vibeProxy vibe 实例的 proxy，供代码中使用
+   * @param depth 当前调用深度
    */
-  private async executeCode(code: string, args: unknown[], vibeProxy: any): Promise<unknown> {
+  private async executeCode(code: string, args: unknown[], vibeProxy: any, depth: number): Promise<unknown> {
     try {
       // 使用 AsyncFunction 支持 await
       const AsyncFunction = (async function () {}).constructor as FunctionConstructor;
+      // 创建带深度信息的 proxy
+      const depthAwareProxy = this.createDepthAwareProxy(vibeProxy, depth + 1);
       const fn = new AsyncFunction('args', 'v', 'z', `"use strict";\n${code}`);
-      return await fn(args, vibeProxy, zodNamespace);
+      return await fn(args, depthAwareProxy, zodNamespace);
     } catch (error) {
       // 如果代码有语法错误，记录详细信息
       const errorMsg = error instanceof Error ? error.message : String(error);
@@ -80,10 +83,12 @@ export class vibe {
 
   /**
    * 核心方法：处理函数调用
+   * @param depth 当前调用深度，用于防止无限递归
    */
-  async handleCall(functionName: string, args: unknown[], outputSchema?: z.ZodType<unknown>, vibeProxy?: any): Promise<unknown> {
+  async handleCall(functionName: string, args: unknown[], outputSchema?: z.ZodType<unknown>, vibeProxy?: any, depth: number = 0): Promise<unknown> {
     const startTime = Date.now();
     const cacheKey = this.createCacheKey(functionName, args, outputSchema);
+    const maxDepth = 5;
     
     const logEntry: LogEntry = {
       timestamp: Date.now(),
@@ -101,14 +106,15 @@ export class vibe {
       if (cached) {
         logEntry.fromCache = true;
         logEntry.code = cached.code;
-        const result = await this.executeCode(cached.code, args, vibeProxy);
+        const result = await this.executeCode(cached.code, args, vibeProxy, depth);
         const finalResult = outputSchema ? this.validateOutput(result, outputSchema) : result;
         logEntry.result = finalResult;
         return finalResult;
       }
 
       // 调用 LLM 生成代码
-      const llmResult = await this.llm.generateFunctionCode(functionName, args, outputSchema);
+      const isLastCall = depth >= maxDepth - 1;
+      const llmResult = await this.llm.generateFunctionCode(functionName, args, outputSchema, isLastCall);
       
       logEntry.code = llmResult.code;
       logEntry.llmRequest = {
@@ -125,7 +131,7 @@ export class vibe {
       };
 
       // 执行代码并验证
-      const result = await this.executeCode(llmResult.code, args, vibeProxy);
+      const result = await this.executeCode(llmResult.code, args, vibeProxy, depth);
       const finalResult = outputSchema ? this.validateOutput(result, outputSchema) : result;
 
       // 缓存结果
@@ -144,6 +150,37 @@ export class vibe {
       logEntry.executionTime = Date.now() - startTime;
       await this.logger.log(logEntry);
     }
+  }
+
+  /**
+   * 创建带深度信息的 proxy
+   */
+  private createDepthAwareProxy(originalProxy: any, depth: number): any {
+    const instance = this;
+    return new Proxy(originalProxy, {
+      get(_target, prop: string | symbol) {
+        if (typeof prop === 'symbol' || prop === 'then' || prop === 'constructor') {
+          return undefined;
+        }
+        
+        return (...args: unknown[]) => {
+          const builder = new FunctionCallBuilder(instance, String(prop), args, originalProxy, depth);
+          
+          const callableFunction = function(schema?: z.ZodType<unknown>) {
+            return builder.__call(schema);
+          };
+          
+          Object.assign(callableFunction, {
+            then: builder.then.bind(builder),
+            catch: builder.catch.bind(builder),
+            finally: builder.finally.bind(builder),
+            withSchema: builder.withSchema.bind(builder),
+          });
+          
+          return callableFunction;
+        };
+      },
+    });
   }
 
   /**
@@ -169,35 +206,6 @@ export class vibe {
 }
 
 /**
- * 装饰器函数：将方法替换为 LLM 生成的实现
- */
-export function vibeFn(_target: unknown, propertyKey: string, descriptor: PropertyDescriptor): void {
-  descriptor.value = async function (...args: unknown[]) {
-    const vibeInstance = (this as any)._vibeInstance;
-    if (!vibeInstance) {
-      throw new Error('@vibeFn requires @VibeClass decorator on the class.');
-    }
-    return vibeInstance.handleCall(propertyKey, args);
-  };
-}
-
-/**
- * 类装饰器：初始化 vibe 实例
- */
-export function VibeClass(config: VibeConfig = {}) {
-  return function <T extends { new (...args: any[]): {} }>(constructor: T) {
-    const vibeInstance = new vibe(config);
-    
-    return class extends constructor {
-      constructor(...args: any[]) {
-        super(...args);
-        (this as any)._vibeInstance = vibeInstance;
-      }
-    };
-  };
-}
-
-/**
  * 创建并返回 vibe 实例的便捷函数
  * 支持多种调用方式：
  * - v.functionName(args)
@@ -215,7 +223,7 @@ export function createVibe(config: VibeConfig = {}): any {
       }
       
       return (...args: unknown[]) => {
-        const builder = new FunctionCallBuilder(instance, String(prop), args, vibeProxy);
+        const builder = new FunctionCallBuilder(instance, String(prop), args, vibeProxy, 0);
         
         // 创建一个函数作为 Proxy 的 target，这样 apply trap 才能工作
         const callableFunction = function(schema?: z.ZodType<unknown>) {
