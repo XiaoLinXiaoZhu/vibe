@@ -1,4 +1,4 @@
-import { CacheManager } from './cache.js';
+import { FunctionCacheManager } from './cache.js';
 import { LLMService } from './llm.js';
 import { Logger, LogEntry } from './logger.js';
 import { FunctionCallBuilder } from './builder.js';
@@ -11,15 +11,16 @@ import type { z } from 'zod';
  */
 export class vibe {
   private config: ReturnType<typeof mergeConfig>;
-  private cache: CacheManager;
+  private functionCache: FunctionCacheManager;
   private llm: LLMService;
   private logger: Logger;
 
   constructor(config: VibeConfig = {}) {
     this.config = mergeConfig(config);
-    const logDir = this.config.cacheDir.replace('/cache', '/logs');
+    const functionCacheDir = `${this.config.cacheDir}/functions`;
+    const logDir = `${this.config.cacheDir}/reports`;
     
-    this.cache = new CacheManager(this.config.cacheDir);
+    this.functionCache = new FunctionCacheManager(functionCacheDir);
     this.logger = new Logger(logDir);
     this.llm = new LLMService(
       this.config.apiKey,
@@ -28,7 +29,7 @@ export class vibe {
     );
     
     // 初始化缓存目录和日志目录
-    this.cache.init().catch(console.error);
+    this.functionCache.init().catch(console.error);
     this.logger.init().catch(console.error);
   }
 
@@ -95,7 +96,7 @@ export class vibe {
 
     try {
       // 尝试从缓存获取
-      const cached = await this.cache.get(cacheKey);
+      const cached = await this.functionCache.get(cacheKey);
       if (cached) {
         logEntry.fromCache = true;
         logEntry.code = cached.code;
@@ -138,7 +139,7 @@ export class vibe {
       }
 
       // 缓存结果
-      await this.cache.set(cacheKey, {
+      await this.functionCache.set(cacheKey, {
         code: llmResult.code,
         createdAt: Date.now(),
       });
@@ -179,7 +180,7 @@ export class vibe {
    * 清除缓存（内部方法）
    */
   async clearCache(): Promise<void> {
-    await this.cache.clear();
+    await this.functionCache.clear();
   }
 
   /**

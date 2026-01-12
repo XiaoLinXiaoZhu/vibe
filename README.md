@@ -26,7 +26,7 @@ bun install
 LLM_API_KEY=your-api-key-here
 LLM_MODEL=gpt-4
 LLM_BASE_URL=https://api.openai.com/v1
-CACHE_DIR=.vibe/cache
+CACHE_DIR=.vibe
 STRICT=false
 ```
 
@@ -179,7 +179,7 @@ bun run build
 
 ### 缓存
 
-缓存默认保存在 `.vibe/cache` 目录中，缓存键基于：
+缓存默认保存在 `CACHE_DIR/functions` 目录中（默认为 `.vibe/functions`），缓存键基于：
 - 函数名
 - 参数类型
 - 输出类型（如果有）
@@ -192,7 +192,7 @@ await vibeUtils.clearCache();
 
 ### 日志记录
 
-每次函数调用都会被记录到 `.vibe/logs` 目录中，日志文件按日期命名（例如：`vibe-2026-01-12.jsonl`）。
+每次函数调用都会被记录到 `CACHE_DIR/reports` 目录中（默认为 `.vibe/reports`），日志文件按日期命名（例如：`vibe-2026-01-12.jsonl`）。
 
 日志记录包含：
 - 时间戳

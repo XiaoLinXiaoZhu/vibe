@@ -8,7 +8,7 @@ export function loadConfigFromEnv(): VibeConfig {
     apiKey: process.env.LLM_API_KEY,
     model: process.env.LLM_MODEL,
     baseUrl: process.env.LLM_BASE_URL,
-    cacheDir: process.env.CACHE_DIR || '.vibe/cache',
+    cacheDir: process.env.CACHE_DIR || '.vibe',
     strict: process.env.STRICT === 'true',
   };
 }
@@ -23,7 +23,7 @@ export function mergeConfig(userConfig: VibeConfig = {}): Required<VibeConfig> {
     apiKey: userConfig.apiKey ?? envConfig.apiKey ?? '',
     model: userConfig.model ?? envConfig.model ?? 'gpt-4',
     baseUrl: userConfig.baseUrl ?? envConfig.baseUrl ?? 'https://api.openai.com/v1',
-    cacheDir: userConfig.cacheDir ?? envConfig.cacheDir ?? '.vibe/cache',
+    cacheDir: userConfig.cacheDir ?? envConfig.cacheDir ?? '.vibe',
     strict: userConfig.strict ?? envConfig.strict ?? false,
   };
 }

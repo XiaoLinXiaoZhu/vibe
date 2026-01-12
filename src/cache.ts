@@ -5,7 +5,7 @@ import { CacheKey, CacheItem } from './types.js';
 /**
  * 缓存管理器
  */
-export class CacheManager {
+export class FunctionCacheManager {
   private cacheDir: string;
 
   constructor(cacheDir: string) {
