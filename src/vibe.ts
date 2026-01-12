@@ -48,43 +48,32 @@ export class vibe {
    * 执行代码
    */
   private executeCode(code: string, args: unknown[]): unknown {
-    try {
-      // 创建函数并执行
-      const fn = new Function('args', `"use strict";\n${code}`);
-      return fn(args);
-    } catch (error) {
-      throw new Error(`Code execution failed: ${error instanceof Error ? error.message : String(error)}`);
-    }
+    const fn = new Function('args', `"use strict";\n${code}`);
+    return fn(args);
   }
 
   /**
    * 验证输出类型
    */
   private validateOutput(output: unknown, schema: z.ZodType<unknown>): unknown {
-    if (this.config.strict) {
-      try {
-        return schema.parse(output);
-      } catch (error) {
-        throw new Error(`Output type validation failed: ${error instanceof Error ? error.message : String(error)}`);
-      }
-    } else {
-      // 非 strict 模式，尝试解析，失败则返回原始值
-      try {
-        return schema.parse(output);
-      } catch {
-        return output;
-      }
+    const result = schema.safeParse(output);
+    if (result.success) {
+      return result.data;
     }
+    if (this.config.strict) {
+      throw new Error(`Output validation failed: ${result.error.message}`);
+    }
+    return output;
   }
 
   /**
    * 核心方法：处理函数调用
    */
-  private async handleCall(functionName: string, args: unknown[], outputSchema?: z.ZodType<unknown>): Promise<unknown> {
+  async handleCall(functionName: string, args: unknown[], outputSchema?: z.ZodType<unknown>): Promise<unknown> {
     const startTime = Date.now();
     const cacheKey = this.createCacheKey(functionName, args, outputSchema);
     
-    let logEntry: LogEntry = {
+    const logEntry: LogEntry = {
       timestamp: Date.now(),
       functionName,
       args,
@@ -100,21 +89,15 @@ export class vibe {
       if (cached) {
         logEntry.fromCache = true;
         logEntry.code = cached.code;
-        
         const result = this.executeCode(cached.code, args);
         const finalResult = outputSchema ? this.validateOutput(result, outputSchema) : result;
-        
         logEntry.result = finalResult;
-        logEntry.executionTime = Date.now() - startTime;
-        
-        await this.logger.log(logEntry);
         return finalResult;
       }
 
       // 调用 LLM 生成代码
       const llmResult = await this.llm.generateFunctionCode(functionName, args, outputSchema);
       
-      // 记录 LLM 请求和响应
       logEntry.code = llmResult.code;
       logEntry.llmRequest = {
         systemPrompt: llmResult.systemPrompt,
@@ -129,14 +112,9 @@ export class vibe {
         usage: llmResult.usage,
       };
 
-      // 执行代码
+      // 执行代码并验证
       const result = this.executeCode(llmResult.code, args);
-
-      // 类型验证
-      let finalResult = result;
-      if (outputSchema) {
-        finalResult = this.validateOutput(result, outputSchema);
-      }
+      const finalResult = outputSchema ? this.validateOutput(result, outputSchema) : result;
 
       // 缓存结果
       await this.functionCache.set(cacheKey, {
@@ -145,35 +123,15 @@ export class vibe {
       });
 
       logEntry.result = finalResult;
-      logEntry.executionTime = Date.now() - startTime;
-      
-      await this.logger.log(logEntry);
       return finalResult;
     } catch (error) {
       logEntry.success = false;
       logEntry.error = error instanceof Error ? error.message : String(error);
-      logEntry.executionTime = Date.now() - startTime;
-      
-      await this.logger.log(logEntry);
       throw error;
+    } finally {
+      logEntry.executionTime = Date.now() - startTime;
+      await this.logger.log(logEntry);
     }
-  }
-
-  /**
-   * Proxy handler - 所有属性访问都返回 AI 函数
-   */
-  private createProxy(): ProxyHandler<FunctionCallBuilder> {
-    const self = this;
-    return {
-      get(_target, prop: string) {
-        return (...args: unknown[]) => {
-          const builder = new FunctionCallBuilder(self, prop, args);
-          return new Proxy(builder, {
-            apply: (_t, _this, [schema]) => builder.__call(schema),
-          }) as any;
-        };
-      },
-    };
   }
 
   /**
@@ -199,20 +157,14 @@ export class vibe {
 }
 
 /**
- * 装饰器工厂函数
- * 注意：使用 @vibeFn 的方法，函数体会被 LLM 生成的代码替换
+ * 装饰器函数：将方法替换为 LLM 生成的实现
  */
-export function vibeFn(target: unknown, propertyKey: string, descriptor: PropertyDescriptor): void {
-  const originalMethod = descriptor.value;
-  
+export function vibeFn(_target: unknown, propertyKey: string, descriptor: PropertyDescriptor): void {
   descriptor.value = async function (...args: unknown[]) {
-    const self = this as any;
-    const vibeInstance = self._vibeInstance || (self.constructor as any)._vibeInstance;
-
+    const vibeInstance = (this as any)._vibeInstance;
     if (!vibeInstance) {
-      throw new Error('@vibeFn decorator requires vibe instance. Use @VibeClass decorator on the class first.');
+      throw new Error('@vibeFn requires @VibeClass decorator on the class.');
     }
-
     return vibeInstance.handleCall(propertyKey, args);
   };
 }
@@ -238,35 +190,52 @@ export function VibeClass(config: VibeConfig = {}) {
  */
 export function createVibe(config: VibeConfig = {}): any {
   const instance = new vibe(config);
-  return new Proxy(instance, instance.createProxy());
+  return new Proxy(instance, {
+    get(_target, prop: string) {
+      return (...args: unknown[]) => {
+        const builder = new FunctionCallBuilder(instance, prop, args);
+        return new Proxy(builder, {
+          apply: (_t, _this, [schema]) => builder.__call(schema),
+        });
+      };
+    },
+  });
 }
 
 /**
  * Vibe 实用方法对象
  * 提供 clearCache, readLogs 等工具方法
  */
-export const vibeUtils = {
+class VibeUtils {
+  private static instance?: vibe;
+
+  private static getInstance(config?: VibeConfig): vibe {
+    if (!this.instance) {
+      this.instance = new vibe(config);
+    }
+    return this.instance;
+  }
+
   /**
    * 清除所有缓存
    */
-  clearCache: (config: VibeConfig = {}) => {
-    const instance = new vibe(config);
-    return instance.clearCache();
-  },
+  static clearCache(config?: VibeConfig): Promise<void> {
+    return this.getInstance(config).clearCache();
+  }
 
   /**
    * 读取日志
    */
-  readLogs: (date?: string, config: VibeConfig = {}) => {
-    const instance = new vibe(config);
-    return instance.readLogs(date);
-  },
+  static readLogs(date?: string, config?: VibeConfig): Promise<LogEntry[]> {
+    return this.getInstance(config).readLogs(date);
+  }
 
   /**
    * 清空所有日志
    */
-  clearLogs: (config: VibeConfig = {}) => {
-    const instance = new vibe(config);
-    return instance.clearLogs();
-  },
-};
+  static clearLogs(config?: VibeConfig): Promise<void> {
+    return this.getInstance(config).clearLogs();
+  }
+}
+
+export const vibeUtils = VibeUtils;

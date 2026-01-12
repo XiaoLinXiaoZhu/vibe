@@ -13,38 +13,13 @@ export class FunctionCallBuilder {
     private outputSchema?: z.ZodType<unknown>
   ) {}
 
-  withSchema<T extends z.ZodType<unknown>>(schema: T): this {
+  withSchema<T extends z.ZodType<unknown>>(schema: T): Promise<unknown> {
     this.outputSchema = schema;
-    return this;
-  }
-
-  then<TResult, TError>(
-    onfulfilled?: ((value: unknown) => TResult | Promise<TResult>),
-    onrejected?: ((reason: TError) => TResult | Promise<TResult>)
-  ): Promise<TResult | unknown> {
-    return this.execute().then(onfulfilled, onrejected);
-  }
-
-  catch<TResult>(
-    onrejected?: ((reason: unknown) => TResult | Promise<TResult>)
-  ): Promise<unknown> {
-    return this.execute().catch(onrejected);
-  }
-
-  finally(onfinally?: () => void): Promise<unknown> {
-    return this.execute().finally(onfinally);
+    return this.vibeInstance.handleCall(this.functionName, this.args, this.outputSchema);
   }
 
   async __call(schema?: z.ZodType<unknown>): Promise<unknown> {
     if (schema) this.outputSchema = schema;
-    return this.execute();
-  }
-
-  private execute(): Promise<unknown> {
-    return (this.vibeInstance as any).handleCall(
-      this.functionName,
-      this.args,
-      this.outputSchema
-    );
+    return this.vibeInstance.handleCall(this.functionName, this.args, this.outputSchema);
   }
 }

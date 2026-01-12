@@ -59,11 +59,7 @@ export class Logger {
    * 初始化日志目录
    */
   async init(): Promise<void> {
-    try {
-      await fs.access(this.logDir);
-    } catch {
-      await fs.mkdir(this.logDir, { recursive: true });
-    }
+    await fs.mkdir(this.logDir, { recursive: true });
   }
 
   /**
@@ -87,15 +83,8 @@ export class Logger {
    */
   async log(entry: LogEntry): Promise<void> {
     await this.init();
-    
-    const logPath = this.getLogPath();
     const logLine = JSON.stringify(entry) + '\n';
-    
-    try {
-      await fs.appendFile(logPath, logLine, 'utf-8');
-    } catch (error) {
-      console.error('Failed to write log:', error);
-    }
+    await fs.appendFile(this.getLogPath(), logLine, 'utf-8');
   }
 
   /**
@@ -103,15 +92,13 @@ export class Logger {
    */
   async readLogs(date?: string): Promise<LogEntry[]> {
     await this.init();
-    
     const filename = date ? `vibe-${date}.jsonl` : this.getLogFilename();
     const logPath = join(this.logDir, filename);
     
     try {
       const content = await fs.readFile(logPath, 'utf-8');
-      const lines = content.trim().split('\n');
-      return lines.map(line => JSON.parse(line) as LogEntry);
-    } catch (error) {
+      return content.trim().split('\n').map(line => JSON.parse(line));
+    } catch {
       return [];
     }
   }
@@ -120,10 +107,6 @@ export class Logger {
    * 清空所有日志
    */
   async clearLogs(): Promise<void> {
-    try {
-      await fs.rm(this.logDir, { recursive: true, force: true });
-    } catch {
-      // 目录不存在，忽略错误
-    }
+    await fs.rm(this.logDir, { recursive: true, force: true });
   }
 }

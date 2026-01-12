@@ -16,11 +16,7 @@ export class FunctionCacheManager {
    * 初始化缓存目录
    */
   async init(): Promise<void> {
-    try {
-      await fs.access(this.cacheDir);
-    } catch {
-      await fs.mkdir(this.cacheDir, { recursive: true });
-    }
+    await fs.mkdir(this.cacheDir, { recursive: true });
   }
 
   /**
@@ -64,10 +60,6 @@ export class FunctionCacheManager {
    * 清除所有缓存
    */
   async clear(): Promise<void> {
-    try {
-      await fs.rm(this.cacheDir, { recursive: true, force: true });
-    } catch {
-      // 目录不存在，忽略错误
-    }
+    await fs.rm(this.cacheDir, { recursive: true, force: true });
   }
 }

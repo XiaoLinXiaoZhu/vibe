@@ -53,102 +53,61 @@ export class LLMService {
     outputSchema?: z.ZodType<unknown>
   ): Promise<LLMGenerateResult> {
     const schemaDescription = outputSchema
-      ? `\nOutput type schema (Zod):\n${JSON.stringify(outputSchema)}\n\nIMPORTANT: The output MUST satisfy this schema.`
+      ? `\nOutput schema: ${JSON.stringify(outputSchema)}\nThe output MUST satisfy this schema.`
       : '';
 
-    const userPrompt = this.buildPrompt(functionName, args, schemaDescription);
-    const systemPrompt = 'You are a JavaScript expert. Generate clean, efficient, and correct JavaScript function implementations. Return ONLY the function code, no explanations, no markdown, no backticks.';
+    const systemPrompt = 'You are a JavaScript expert. Generate clean, efficient JavaScript code. Return ONLY the function code, no markdown, no backticks.';
+    const userPrompt = `Generate a JavaScript function for "${functionName}".
+Arguments: ${args.length > 0 ? JSON.stringify(args) : 'None'}${schemaDescription}
 
-    try {
-      const temperature = 0.3;
-      const maxTokens = 2000;
+Requirements:
+- Pure function (no side effects)
+- Access arguments via args array: args[0], args[1], etc.
+- Return the result directly
+- Use only JavaScript syntax
 
-      const response = await this.client.chat.completions.create({
-        model: this.model,
-        messages: [
-          {
-            role: 'system',
-            content: systemPrompt,
-          },
-          {
-            role: 'user',
-            content: userPrompt,
-          },
-        ],
-        temperature,
-        max_tokens: maxTokens,
-      });
+Return ONLY executable code, nothing else.`;
 
-      const rawContent = response.choices[0]?.message?.content?.trim() || '';
-      const finishReason = response.choices[0]?.finish_reason;
-      const usage = response.usage ? {
+    const temperature = 0.3;
+    const maxTokens = 2000;
+
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      temperature,
+      max_tokens: maxTokens,
+    });
+
+    const rawContent = response.choices[0]?.message?.content?.trim() || '';
+    const code = this.cleanCode(rawContent);
+
+    return {
+      code,
+      systemPrompt,
+      userPrompt,
+      model: this.model,
+      temperature,
+      maxTokens,
+      rawContent,
+      finishReason: response.choices[0]?.finish_reason,
+      usage: response.usage ? {
         promptTokens: response.usage.prompt_tokens,
         completionTokens: response.usage.completion_tokens,
         totalTokens: response.usage.total_tokens,
-      } : undefined;
-      
-      // 清理代码（移除可能的 markdown 代码块标记）
-      const code = this.cleanCode(rawContent);
-
-      return {
-        code,
-        systemPrompt,
-        userPrompt,
-        model: this.model,
-        temperature,
-        maxTokens,
-        rawContent,
-        finishReason,
-        usage,
-      };
-    } catch (error) {
-      throw new Error(`LLM call failed: ${error instanceof Error ? error.message : String(error)}`);
-    }
+      } : undefined,
+    };
   }
 
   /**
-   * 构建提示词
-   */
-  private buildPrompt(functionName: string, args: unknown[], schemaDescription: string): string {
-    const argsDescription = args.length > 0
-      ? `\nArguments: ${JSON.stringify(args, null, 2)}`
-      : '\nNo arguments provided.';
-
-    return `Generate a JavaScript function implementation for the function "${functionName}".
-${argsDescription}${schemaDescription}
-
-Requirements:
-1. The function must be a pure function (no side effects)
-2. Return the result directly (no console.log)
-3. Handle edge cases appropriately
-4. Use JavaScript syntax and include only the function body code (no function declaration, no export)
-5. Access arguments via the 'args' array: args[0], args[1], etc.
-
-Return ONLY the code that should be executed, nothing else. For example:
-return args[0] + args[1];
-`;
-  }
-
-  /**
-   * 清理代码（移除 markdown 和其他标记）
+   * 清理代码（移除 markdown 标记）
    */
   private cleanCode(code: string): string {
-    // 移除可能的 markdown 代码块标记
-    code = code.replace(/^```(?:typescript|ts|javascript|js)?\s*\n/i, '');
-    code = code.replace(/\n```$/, '');
-    code = code.trim();
-    
-    // 如果代码包含完整的函数声明，提取函数体
-    const functionBodyMatch = code.match(/\{[\s\S]*\}$/);
-    if (functionBodyMatch) {
-      let body = functionBodyMatch[0];
-      // 移除外层的大括号
-      if (body.startsWith('{') && body.endsWith('}')) {
-        body = body.slice(1, -1);
-      }
-      return body.trim();
-    }
-    
-    return code;
+    return code
+      .replace(/^```(?:typescript|ts|javascript|js)?\s*\n/i, '')
+      .replace(/\n```$/, '')
+      .trim();
   }
 }
