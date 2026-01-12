@@ -7,7 +7,7 @@ const characters = ["Alice","Bob","Charlie","David","Eve","Frank","George","Harr
 // 测试 1: fuckWho 基础功能
 test('fuckWho: 选择两个人物', async () => {
   console.log('\n=== 演示: fuckWho 选择两个人物 ===');
-  const result = await v.fuck('Bob', 'Bob');
+  const result = await v.fuck('Alice', 'Bob');
   console.log(`v.fuck("Alice", "Bob") = ${result}`);
   console.log('=== 演示完成 ===\n');
   expect(result).toBeDefined();

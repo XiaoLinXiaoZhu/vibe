@@ -44,113 +44,133 @@ export class LLMService {
     this.model = model;
   }
 
-/**
-   * 生成函数实现代码
-   * @param isLastCall 是否是最后一次调用（达到最大深度）
-   */
-async generateFunctionCode(
-  functionName: string,
-  args: unknown[],
-  outputSchema?: z.ZodType<unknown>,
-  isLastCall: boolean = false
-): Promise<LLMGenerateResult> {
-  // 1. 构建精简的 Schema 描述
-  const schemaDesc = outputSchema
-    ? `\nExpected Return Type: ${this.describeSchema(outputSchema)}`
-    : '';
+  /**
+     * 生成函数实现代码
+     * @param isLastCall 是否是最后一次调用（达到最大深度）
+     */
+  async generateFunctionCode(
+    functionName: string,
+    args: unknown[],
+    outputSchema?: z.ZodType<unknown>,
+    isLastCall: boolean = false
+  ): Promise<LLMGenerateResult> {
+    // 1. 获取期望的输出类型描述，用于指导模型生成对应的 Zod 定义
+    const schemaDesc = outputSchema
+      ? this.describeSchema(outputSchema)
+      : 'any';
 
-  // 2. 构建参数摘要，帮助模型判断是否是直接 Prompt
-  const argsDesc = args.length > 0 
-    ? `Arguments: ${JSON.stringify(args).slice(0, 1000)}` // 截断过长参数避免 Token 浪费
-    : 'Arguments: None';
+    const argsInfo = args.length > 0
+      ? `Current Argument Values (FOR CONTEXT ONLY, DO NOT HARDCODE): ${JSON.stringify(args).slice(0, 1000)}`
+      : 'Arguments: None';
 
-  // 3. System Prompt: 定义环境、人格和边界
-  // 重点：强调 "有趣" 和 "Native Execution" (直接执行)
-  const systemPrompt = `You are the AI engine for 'Vibe', a runtime that executes JavaScript generated on-the-fly.
+    const systemPrompt = `You are the AI engine for 'Vibe'. You generate JavaScript code to execute functions.
 
-GLOBAL CONTEXT (Available in your code):
-1. args: Array of inputs (args[0], args[1]...).
-2. z: Zod library for validation.
-3. v: The Vibe instance for recursive AI calls.
- - Syntax: await v.func(arg)(z.type()) or await v["prompt"]()(z.type())
- - COST WARNING: Calling 'v' triggers a new LLM bill. Avoid if possible.
+GLOBAL VARIABLES:
+1. args: Array of inputs.
+2. z: Zod library. CRITICAL: Use for output validation.
+3. v: The Vibe instance.
+ - Syntax: await v[prompt]()(z.schema)
+ - ⚠️ ALWAYS append (z.schema) when calling v!
 
-CORE PHILOSOPHY:
-1. ⚡️ NATIVE FIRST: If you (the LLM) know the result or logic, implement it DIRECTLY in JavaScript.
- - Example: v["What is 1+1"]() -> return 2; (Don't call v.add)
- - Example: v["Tell a joke"]() -> return "Why did the chicken..."; (Don't call v.generateJoke)
- - ONLY call 'v' for: Complex multi-step reasoning, browsing, or when you explicitly need a sub-agent.
-2. 🎨 FUN > FUNCTIONAL: Unless strictly logical (math/data), prefer creative, entertaining outputs. Use emojis, ASCII art, or randomization.
-3. 🛡️ ROBUST: Handle undefined args safely.
+⚡️ STRATEGY - CHOOSE ONE PATH:
 
-CONSTRAINT: Return ONLY the function body code. No markdown, no wrappers.`;
+PATH A: PURE LOGIC / NATIVE JS (Use this when possible)
+ - Math, array manipulation, randomness, simple patterns.
+ - ✅ GOOD: return args[0] + args[1];
 
-  // 4. User Prompt: 动态构建任务
-  // 区分 "最后一次调用" 和 "普通调用"
-  let specificInstruction = '';
+PATH B: DIRECT KNOWLEDGE (Only if NO args or args are config)
+ - If the function name ITSELF is the prompt (e.g. v["Tell a joke"]()) AND args are empty/irrelevant.
+ - Return the content directly.
+ - Be creative, use emojis and ASCII art!
 
-  if (isLastCall) {
-    specificInstruction = `
-⚠️ MAX RECURSION REACHED.
-You MUST return a value directly using pure JavaScript.
-DO NOT call 'v' again.
-- If asking for a prompt/question: Answer it directly as a string.
-- If creative: Return a random selection from an array or a template string.
-- If logical: Calculate it.`;
-  } else {
-    specificInstruction = `
-Task: Implement function "${functionName}"
-${argsDesc}${schemaDesc}
+PATH C: DYNAMIC DELEGATION (CRITICAL for "Explain X", "Translate Y")
+ - If the task requires AI intelligence applied to specific 'args'.
+ - DO NOT implement the content yourself (avoid hardcoding).
+ - Construct a prompt string and delegate to 'v'.
+ - ⚠️ MUST define the return type using 'z' to match expectations!
+ 
+ ✅ GOOD EXAMPLE:
+   const prompt = \`Explain \${args[0]} in \${args[1]} style\`;
+   // Notice the (z.string()) at the end:
+   return await v[prompt]()(z.string()); 
 
-GUIDANCE:
-- If "${functionName}" looks like a prompt/question (e.g. "write a poem", "translate this"), ANSWER IT directly in the returned code string.
-- If it implies a visual (e.g. "draw"), return ASCII art.
-- If it allows variation, use Math.random() to be unpredictable and fun.
-- Use 'await v' ONLY if the task is too complex for a single function body.`;
+ ✅ COMPLEX EXAMPLE (Expect Object):
+   const prompt = \`Analyze \${args[0]}\`;
+   // Define schema to match expected output:
+   return await v[prompt]()(z.object({ sentiment: z.string(), score: z.number() }));
+
+CONSTRAINT: Return ONLY the function body code.`;
+
+    let specificInstruction = '';
+
+    if (isLastCall) {
+      specificInstruction = `
+⚠️ MAX RECURSION.
+- Answer the specific question (e.g. "${functionName}") DIRECTLY.
+- Return a value matching type: ${schemaDesc}
+- Be funny, use ASCII art if returning string.
+- DO NOT use 'v' again.`;
+    } else {
+      specificInstruction = `
+Task: Implement "${functionName}"
+${argsInfo}
+Expected Return Type: ${schemaDesc}
+
+DECISION GUIDE:
+1. Is "${functionName}" a specific command requiring AI knowledge about 'args[0]'?
+ -> YES: Use PATH C. 
+ -> Construct dynamic prompt: \`${functionName} \${args[0]}...\`
+ -> Delegate with Schema: await v[prompt]()(z.${schemaDesc === 'any' ? 'string' : schemaDesc}()); 
+
+2. Is "${functionName}" a complete prompt itself (args are empty)?
+ -> YES: Use PATH B. Return content directly.
+
+3. Is it simple logic?
+ -> YES: Use PATH A.
+`;
+    }
+
+    const userPrompt = `${specificInstruction}`;
+
+    const temperature = 0.6;
+    const maxTokens = 2000;
+
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      temperature,
+      max_tokens: maxTokens,
+    });
+
+    const rawContent = response.choices[0]?.message?.content?.trim() || '';
+    const code = this.cleanCode(rawContent);
+
+    return {
+      code,
+      systemPrompt,
+      userPrompt,
+      model: this.model,
+      temperature,
+      maxTokens,
+      rawContent,
+      finishReason: response.choices[0]?.finish_reason,
+      usage: response.usage ? {
+        promptTokens: response.usage.prompt_tokens,
+        completionTokens: response.usage.completion_tokens,
+        totalTokens: response.usage.total_tokens,
+      } : undefined,
+    };
   }
-
-  const userPrompt = `${specificInstruction}`;
-
-  const temperature = 0.6; // 稍微调高温度以增加趣味性
-  const maxTokens = 2000;
-
-  const response = await this.client.chat.completions.create({
-    model: this.model,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ],
-    temperature,
-    max_tokens: maxTokens,
-  });
-
-  const rawContent = response.choices[0]?.message?.content?.trim() || '';
-  const code = this.cleanCode(rawContent);
-
-  return {
-    code,
-    systemPrompt,
-    userPrompt,
-    model: this.model,
-    temperature,
-    maxTokens,
-    rawContent,
-    finishReason: response.choices[0]?.finish_reason,
-    usage: response.usage ? {
-      promptTokens: response.usage.prompt_tokens,
-      completionTokens: response.usage.completion_tokens,
-      totalTokens: response.usage.total_tokens,
-    } : undefined,
-  };
-}
-
   /**
    * 将 Zod schema 转换为易读的描述
    */
   private describeSchema(schema: z.ZodType<unknown>): string {
     const schemaAny = schema as any;
     const typeName = schemaAny._def?.typeName;
-    
+
     switch (typeName) {
       case 'ZodString':
         return 'string';
@@ -206,20 +226,20 @@ GUIDANCE:
       .replace(/^```(?:typescript|ts|javascript|js)?\s*\n/i, '')
       .replace(/\n```$/, '')
       .trim();
-    
+
     // 移除函数声明包装
     // 匹配: function name(...) { ... } 或 async function name(...) { ... }
     const funcDeclMatch = code.match(/^(?:async\s+)?function\s+\w*\s*\([^)]*\)\s*\{([\s\S]*)\}$/);
     if (funcDeclMatch) {
       return funcDeclMatch[1].trim();
     }
-    
+
     // 匹配箭头函数: (...) => { ... } 或 (...) => ...
     const arrowFuncMatch = code.match(/^\([^)]*\)\s*=>\s*\{([\s\S]*)\}$/);
     if (arrowFuncMatch) {
       return arrowFuncMatch[1].trim();
     }
-    
+
     return code;
   }
 }

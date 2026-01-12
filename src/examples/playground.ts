@@ -5,5 +5,5 @@ import { z } from "zod";
 const v = createVibe();
 
 console.log(
-    await v.adoreHamster()(z.object({name: z.string(), reason: z.string()}))
+    await v.explain("ROM-COM MOMENT","chinese")(z.string())
 );
