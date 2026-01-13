@@ -14,7 +14,10 @@
   "scripts": {
     "test": "bun run src/tests/index.ts",
     "playground": "bun run src/examples/playground.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "game": "bun run src/examples/game/game-entry.ts",
+    "game-server": "bun run src/examples/game/server.ts",
+    "game-demo": "bun run src/examples/game/game-entry.ts"
   },
   "keywords": [
     "llm",
@@ -26,7 +29,9 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
+    "express": "^5.2.1",
     "openai": "^4.20.0",
     "zod": "^3.22.4"
   },

@@ -33,14 +33,36 @@ bun add vibe
 
 ## 快速开始
 
+### 前置要求
+
+使用vibe之前，需要设置环境变量：
+
+```bash
+# Linux/Mac
+export LLM_API_KEY=your_api_key_here
+export LLM_MODEL=gpt-4  # 可选
+export LLM_BASE_URL=https://api.openai.com/v1  # 可选
+
+# Windows (PowerShell)
+$env:LLM_API_KEY="your_api_key_here"
+$env:LLM_MODEL="gpt-4"  # 可选
+$env:LLM_BASE_URL="https://api.openai.com/v1"  # 可选
+
+# Windows (CMD)
+set LLM_API_KEY=your_api_key_here
+set LLM_MODEL=gpt-4  # 可选
+set LLM_BASE_URL=https://api.openai.com/v1  # 可选
+```
+
 ### 基础使用
 
 ```typescript
 import { createVibe } from 'vibe';
 
 const v = createVibe({
-  apiKey: 'your-api-key',
-  model: 'gpt-4'
+  apiKey: 'your-api-key', // 从环境变量 LLM_API_KEY 读取
+  model: 'gpt-4',          // 从环境变量 LLM_MODEL 读取
+  baseUrl: 'https://api.openai.com/v1' // 从环境变量 LLM_BASE_URL 读取
 });
 
 // 直接调用任意函数
@@ -245,13 +267,18 @@ interface VibeConfig {
 
 ```typescript
 const v = createVibe({
-  apiKey: 'your-api-key',
-  model: 'gpt-4-turbo',
-  baseUrl: 'https://api.openai.com/v1',
+  apiKey: 'your-api-key',      // 也可从环境变量 LLM_API_KEY 读取
+  model: 'gpt-4-turbo',       // 也可从环境变量 LLM_MODEL 读取
+  baseUrl: 'https://api.openai.com/v1', // 也可从环境变量 LLM_BASE_URL 读取
   cacheDir: '.vibe/cache',
   strict: true
 });
 ```
+
+**提示**：如果不提供配置，vibe 会自动从以下环境变量读取：
+- `LLM_API_KEY` - API密钥
+- `LLM_MODEL` - 模型名称（默认: gpt-4）
+- `LLM_BASE_URL` - API基础URL（默认: https://api.openai.com/v1）
 
 ## 实现细节
 
@@ -279,6 +306,39 @@ const v = createVibe({
 10. **OpenAI API**：使用 OpenAI 提供的 API，保证兼容性。
 
 11. **日志记录**：每次函数调用都会记录到 `.vibe/logs` 目录，包含完整的 LLM 请求、响应、生成的代码、执行时间等信息。
+
+## 示例项目
+
+### 将领战棋游戏 🎮
+
+一个完全由LLM动态生成内容的策略战棋游戏，展示了vibe库的强大能力：
+
+- 🤖 **AI生成将领**：每个将领的名字、描述、属性和技能都由LLM动态生成
+- 👹 **AI生成敌人**：普通敌人和Boss都由LLM创建，拥有独特的能力
+- 🧠 **AI战斗系统**：伤害计算、技能效果、敌人AI决策都由LLM实时计算
+- 🎯 **战棋玩法**：3层12关卡的回合制策略游戏
+
+#### 快速体验
+
+```bash
+# 1. 设置API密钥
+export OPENAI_API_KEY=your_api_key
+
+# 2. 启动游戏服务器
+bun run game-server
+
+# 3. 在浏览器打开
+# 访问 http://localhost:3000/index.html
+```
+
+#### 查看API示例
+
+```bash
+# 查看vibe API调用示例（不启动服务器）
+bun run game-demo
+```
+
+详细说明请查看 [游戏示例文档](src/examples/game/README.md)。
 
 ## 开发
 
