@@ -1,4 +1,4 @@
-import { createVibe } from './index.js';
+import { createVibe } from '../index.js';
 import { z } from 'zod';
 
 /**

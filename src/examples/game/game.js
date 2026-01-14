@@ -39,7 +39,8 @@ class Game {
     // 显示boss预告
     const bossPreview = document.getElementById('boss-preview-content');
     if (this.state.bosses.length > 0) {
-      bossPreview.textContent = this.state.bosses[this.state.currentLayer - 1] || '即将揭晓...';
+      const boss = this.state.bosses[this.state.currentLayer - 1];
+      bossPreview.textContent = boss?.风格描述 || '即将揭晓...';
     }
   }
 
@@ -351,6 +352,9 @@ class Game {
         this.renderBattlefield();
         this.updateBattleUI();
         this.addBattleLog(`【移动】${unit.name} 移动到 (${x}, ${y})`);
+        
+        // 执行敌人回合
+        await this.executeEnemyTurn();
       } else {
         alert(result.message);
       }
@@ -380,6 +384,12 @@ class Game {
         
         // 检查战斗是否结束
         this.checkBattleEnd();
+        
+        // 如果战斗未结束，执行敌人回合
+        if (this.state.currentBattle.playerUnits.length > 0 &&
+            this.state.currentBattle.enemyUnits.length > 0) {
+          await this.executeEnemyTurn();
+        }
       } else {
         alert(result.message);
       }
@@ -434,6 +444,12 @@ class Game {
         this.updateBattleUI();
         this.addBattleLog(`【技能】${unit.name} 使用 ${result.skillName}: ${result.description}`);
         this.checkBattleEnd();
+        
+        // 如果战斗未结束，执行敌人回合
+        if (this.state.currentBattle.playerUnits.length > 0 &&
+            this.state.currentBattle.enemyUnits.length > 0) {
+          await this.executeEnemyTurn();
+        }
       } else {
         alert(result.message);
       }

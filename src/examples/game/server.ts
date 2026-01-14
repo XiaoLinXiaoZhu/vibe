@@ -75,6 +75,173 @@ let gameState: GameState | null = null;
 
 // ==================== Schema定义 ====================
 
+// BattleState Update Schema (Partial<BattleState>)
+const BattleStateUpdateSchema = z.object({
+  battlefield: z.object({
+    width: z.number(),
+    height: z.number()
+  }).optional(),
+  playerUnits: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    x: z.number(),
+    y: z.number(),
+    hp: z.number(),
+    maxHp: z.number(),
+    attack: z.number(),
+    defense: z.number(),
+    speed: z.number(),
+    skills: z.array(z.object({
+      name: z.string(),
+      description: z.string(),
+      type: z.enum(['attack', 'defense', 'support', 'special']),
+      cooldown: z.number(),
+      currentCooldown: z.number()
+    })),
+    isPlayer: z.boolean()
+  })).optional(),
+  enemyUnits: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    x: z.number(),
+    y: z.number(),
+    hp: z.number(),
+    maxHp: z.number(),
+    attack: z.number(),
+    defense: z.number(),
+    speed: z.number(),
+    skills: z.array(z.object({
+      name: z.string(),
+      description: z.string(),
+      type: z.enum(['attack', 'defense', 'support', 'special']),
+      cooldown: z.number(),
+      currentCooldown: z.number()
+    })),
+    isPlayer: z.boolean()
+  })).optional(),
+  currentWave: z.number().optional(),
+  totalWaves: z.number().optional(),
+  currentTurn: z.enum(['player', 'enemy']).optional(),
+  selectedUnit: z.object({
+    id: z.string(),
+    name: z.string(),
+    x: z.number(),
+    y: z.number(),
+    hp: z.number(),
+    maxHp: z.number(),
+    attack: z.number(),
+    defense: z.number(),
+    speed: z.number(),
+    skills: z.array(z.object({
+      name: z.string(),
+      description: z.string(),
+      type: z.enum(['attack', 'defense', 'support', 'special']),
+      cooldown: z.number(),
+      currentCooldown: z.number()
+    })),
+    isPlayer: z.boolean()
+  }).nullable().optional(),
+  isBossBattle: z.boolean().optional(),
+  boss: z.object({
+    name: z.string(),
+    description: z.string(),
+    buffs: z.array(z.object({
+      name: z.string(),
+      description: z.string(),
+      effect: z.string()
+    }))
+  }).optional()
+});
+
+// BattleState Schema for input
+const BattleStateInputSchema = z.object({
+  battlefield: z.object({
+    width: z.number(),
+    height: z.number()
+  }),
+  playerUnits: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    x: z.number(),
+    y: z.number(),
+    hp: z.number(),
+    maxHp: z.number(),
+    attack: z.number(),
+    defense: z.number(),
+    speed: z.number(),
+    skills: z.array(z.object({
+      name: z.string(),
+      description: z.string(),
+      type: z.enum(['attack', 'defense', 'support', 'special']),
+      cooldown: z.number(),
+      currentCooldown: z.number()
+    })),
+    isPlayer: z.boolean()
+  })),
+  enemyUnits: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    x: z.number(),
+    y: z.number(),
+    hp: z.number(),
+    maxHp: z.number(),
+    attack: z.number(),
+    defense: z.number(),
+    speed: z.number(),
+    skills: z.array(z.object({
+      name: z.string(),
+      description: z.string(),
+      type: z.enum(['attack', 'defense', 'support', 'special']),
+      cooldown: z.number(),
+      currentCooldown: z.number()
+    })),
+    isPlayer: z.boolean()
+  })),
+  currentWave: z.number(),
+  totalWaves: z.number(),
+  currentTurn: z.enum(['player', 'enemy']),
+  selectedUnit: z.object({
+    id: z.string(),
+    name: z.string(),
+    x: z.number(),
+    y: z.number(),
+    hp: z.number(),
+    maxHp: z.number(),
+    attack: z.number(),
+    defense: z.number(),
+    speed: z.number(),
+    skills: z.array(z.object({
+      name: z.string(),
+      description: z.string(),
+      type: z.enum(['attack', 'defense', 'support', 'special']),
+      cooldown: z.number(),
+      currentCooldown: z.number()
+    })),
+    isPlayer: z.boolean()
+  }).nullable(),
+  isBossBattle: z.boolean(),
+  boss: z.object({
+    name: z.string(),
+    description: z.string(),
+    buffs: z.array(z.object({
+      name: z.string(),
+      description: z.string(),
+      effect: z.string()
+    }))
+  }).optional()
+});
+
+// GameState Schema for input
+const GameStateInputSchema = z.object({
+  currentLayer: z.number(),
+  currentLevel: z.number(),
+  bosses: z.array(z.string()),
+  generals: z.array(z.any()),
+  selectedGenerals: z.array(z.any()),
+  availableGenerals: z.array(z.any()),
+  currentBattle: BattleStateInputSchema.nullable()
+});
+
 const GeneralSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -197,32 +364,11 @@ app.post('/api/game/start', async (req, res) => {
   try {
     debugLog('开始新游戏');
 
-    // 使用vibe生成每层的boss风格
-    debugLog('生成Boss风格...');
-    const bosses = await Promise.all([
-      v.生成一个boss风格描述({
-        层数: 'game-level-1',
-        风格描述: '古代神话风格',
-        主题: '火焰主题'
-      })(z.string()),
-      v.生成一个boss风格描述({
-        层数: 'game-level-2',
-        风格描述: '未来科技风格',
-        主题: '机械主题'
-      })(z.string()),
-      v.生成一个boss风格描述({
-        层数: 'game-level-3',
-        风格描述: '宇宙恐怖风格',
-        主题: '虚空主题'
-      })(z.string())
-    ]);
-
-    debugLog('Boss风格生成完成', { bosses });
-
+    // 初始化游戏状态
     gameState = {
       currentLayer: 1,
       currentLevel: 1,
-      bosses: bosses as any,
+      bosses: [],
       generals: [],
       selectedGenerals: [],
       availableGenerals: [],
@@ -234,6 +380,30 @@ app.post('/api/game/start', async (req, res) => {
       currentLevel: gameState.currentLevel
     });
 
+    // 使用vibe生成每层的boss风格 - 传入完整gameState对象
+    debugLog('生成Boss风格...');
+    const bosses = await Promise.all([
+      v.生成一个boss风格描述(gameState)(z.object({
+        层数: z.string(),
+        风格描述: z.string(),
+        主题: z.string()
+      })),
+      v.生成一个boss风格描述(gameState)(z.object({
+        层数: z.string(),
+        风格描述: z.string(),
+        主题: z.string()
+      })),
+      v.生成一个boss风格描述(gameState)(z.object({
+        层数: z.string(),
+        风格描述: z.string(),
+        主题: z.string()
+      }))
+    ]);
+
+    debugLog('Boss风格生成完成', { bosses });
+
+    gameState.bosses = bosses as any;
+
     res.json(gameState);
   } catch (error) {
     debugError('启动游戏失败', error);
@@ -244,23 +414,11 @@ app.post('/api/game/start', async (req, res) => {
 // 获取可选将领
 app.get('/api/game/generals/available', async (req, res) => {
   try {
-    // 使用vibe生成3个可选将领
+    // 使用vibe生成3个可选将领 - 传入完整gameState对象
     const generals = await Promise.all([
-      v.生成一个游戏将领的信息({
-        攻击类型: '攻击型',
-        职业: '战士',
-        主题: '火焰'
-      })(GeneralSchema),
-      v.生成一个游戏将领的信息({
-        攻击类型: '防御型',
-        职业: '法师',
-        主题: '冰霜'
-      })(GeneralSchema),
-      v.生成一个游戏将领的信息({
-        攻击类型: '辅助型',
-        职业: '射手',
-        主题: '雷电'
-      })(GeneralSchema)
+      v.生成一个游戏将领的信息(gameState)(GeneralSchema),
+      v.生成一个游戏将领的信息(gameState)(GeneralSchema),
+      v.生成一个游戏将领的信息(gameState)(GeneralSchema)
     ]);
 
     gameState!.availableGenerals = generals as any;
@@ -301,10 +459,17 @@ app.post('/api/game/battle/start', async (req, res) => {
     const { generals } = req.body;
     const currentLayer = gameState!.currentLayer;
     const currentLevel = gameState!.currentLevel;
-    
+
+    debugLog('开始战斗', {
+      generalsCount: generals.length,
+      currentLayer,
+      currentLevel
+    });
+
     // 判断是否是boss战
     const isBossBattle = currentLevel === 4;
-    
+    debugLog(`战斗类型: ${isBossBattle ? 'BOSS战' : '普通战斗'}`);
+
     // 创建玩家单位
     const playerUnits = generals.map((g: General, i: number) => ({
       id: `player-${i}`,
@@ -320,18 +485,47 @@ app.post('/api/game/battle/start', async (req, res) => {
       isPlayer: true
     }));
 
+    debugLog('玩家单位创建完成', {
+      playerUnits: playerUnits.map((u: Unit) => ({
+        name: u.name,
+        hp: u.hp,
+        attack: u.attack,
+        defense: u.defense
+      }))
+    });
+
     // 使用vibe生成敌人
     const enemyCount = isBossBattle ? 1 : Math.floor(Math.random() * 3) + 2;
+    debugLog('生成敌人', { enemyCount, isBossBattle });
     let enemyUnits: Unit[];
-    
+
+    // 创建临时battleState用于生成敌人
+    const tempBattleState: BattleState = {
+      battlefield: { width: 4, height: 5 },
+      playerUnits: playerUnits,
+      enemyUnits: [],
+      currentWave: 1,
+      totalWaves: 3,
+      currentTurn: 'player',
+      selectedUnit: null,
+      isBossBattle,
+      boss: isBossBattle ? {
+        name: 'boss',
+        description: '强大的boss',
+        buffs: []
+      } : undefined
+    };
+
     if (isBossBattle) {
-      // Boss战 - 使用vibe生成boss
-      const boss = await v.生成一个boss怪物({
-        层数: `game-level-${currentLayer}`,
-        boss风格: gameState!.bosses[currentLayer - 1],
-        玩家单位数量: playerUnits.length
-      })(BossSchema);
-      
+      // Boss战 - 使用vibe生成boss - 传入完整battleState对象
+      debugLog('生成Boss...', {
+        layer: currentLayer,
+        bossStyle: gameState!.bosses[currentLayer - 1]
+      });
+      const boss = await v.生成一个boss怪物(tempBattleState)(BossSchema);
+
+      debugLog('Boss生成完成', boss);
+
       enemyUnits = [{
         id: 'boss',
         name: (boss as any).name,
@@ -346,14 +540,11 @@ app.post('/api/game/battle/start', async (req, res) => {
         isPlayer: false
       }];
     } else {
-      // 普通战斗 - 使用vibe生成敌人
+      // 普通战斗 - 使用vibe生成敌人 - 传入完整battleState对象
+      debugLog('生成普通敌人...');
       enemyUnits = await Promise.all(
         Array.from({ length: enemyCount }, async (_, i) => {
-          const enemy = await v.生成一个普通敌人({
-            层数: `game-level-${currentLayer}`,
-            敌人名称: `敌人${i + 1}`,
-            当前关卡: currentLevel
-          })(UnitSchema);
+          const enemy = await v.生成一个普通敌人(tempBattleState)(UnitSchema);
           return {
             ...(enemy as any),
             x: 3,
@@ -362,6 +553,14 @@ app.post('/api/game/battle/start', async (req, res) => {
           };
         })
       );
+
+      debugLog('普通敌人生成完成', {
+        enemyUnits: enemyUnits.map(u => ({
+          name: u.name,
+          hp: u.hp,
+          attack: u.attack
+        }))
+      });
     }
 
     const battleState: BattleState = {
@@ -381,9 +580,15 @@ app.post('/api/game/battle/start', async (req, res) => {
     };
 
     gameState!.currentBattle = battleState;
+    debugLog('战斗状态创建完成', {
+      playerUnitsCount: playerUnits.length,
+      enemyUnitsCount: enemyUnits.length,
+      currentTurn: battleState.currentTurn
+    });
+
     res.json(battleState);
   } catch (error) {
-    console.error('开始战斗失败:', error);
+    debugError('开始战斗失败', error);
     res.status(500).json({ error: '开始战斗失败' });
   }
 });
@@ -437,43 +642,63 @@ app.post('/api/game/battle/attack', async (req, res) => {
   try {
     const { attackerId, targetId } = req.body;
     const battleState = gameState!.currentBattle!;
-    
+
+    debugLog('执行攻击', { attackerId, targetId });
+
     // 查找攻击者和目标
     const attacker = battleState.playerUnits.find(u => u.id === attackerId);
     const target = battleState.enemyUnits.find(u => u.id === targetId);
-    
+
     if (!attacker || !target) {
+      debugLog('攻击失败：单位不存在', { attackerId, targetId });
       return res.json({ success: false, message: '单位不存在' });
     }
-    
+
+    debugLog('攻击详情', {
+      attacker: attacker.name,
+      target: target.name,
+      attackerPos: { x: attacker.x, y: attacker.y },
+      targetPos: { x: target.x, y: target.y }
+    });
+
     // 计算伤害
     const distance = Math.abs(attacker.x - target.x) + Math.abs(attacker.y - target.y);
     const attackRange = 1; // 默认攻击距离
-    
+
     if (distance > attackRange) {
+      debugLog('攻击失败：距离不足', { distance, attackRange });
       return res.json({ success: false, message: '攻击距离不足' });
     }
-    
-    // 使用vibe计算伤害
-    const damage = await v.计算攻击伤害({
-      攻击者攻击力: attacker.attack,
-      防御者防御力: target.defense,
-      攻击者速度: attacker.speed,
-      防御者速度: target.speed,
-      是否是Boss战: battleState.isBossBattle
-    })(z.number());
-    
-    // 扣除目标HP
-    target.hp -= Math.floor(damage as any);
-    
-    // 检查是否死亡
-    if (target.hp <= 0) {
-      battleState.enemyUnits = battleState.enemyUnits.filter(u => u.id !== targetId);
+
+    // 使用vibe计算伤害 - 传入包含attacker和target的完整对象，返回Partial<BattleState>
+    const battleStateUpdate = await v.计算攻击伤害({
+      battleState: battleState,
+      attacker: attacker,
+      target: target
+    })(BattleStateUpdateSchema);
+
+    const update = battleStateUpdate as z.infer<typeof BattleStateUpdateSchema>;
+
+    debugLog('伤害计算完成', {
+      attackerAttack: attacker.attack,
+      targetDefense: target.defense,
+      battleStateUpdate: update
+    });
+
+    // 应用返回的battleState更新
+    if (update.enemyUnits) {
+      battleState.enemyUnits = update.enemyUnits as Unit[];
     }
-    
-    res.json({ success: true, battleState, damage });
+    if (update.currentTurn !== undefined) {
+      battleState.currentTurn = update.currentTurn;
+    }
+
+    // 切换到敌人回合
+    battleState.currentTurn = 'enemy';
+
+    res.json({ success: true, battleState });
   } catch (error) {
-    console.error('攻击失败:', error);
+    debugError('攻击失败', error);
     res.status(500).json({ error: '攻击失败' });
   }
 });
@@ -493,39 +718,31 @@ app.post('/api/game/battle/skill', async (req, res) => {
     // 使用第一个可用技能（简化处理）
     const skill = unit.skills[0];
     
-    // 使用vibe执行技能效果
-    const skillResult = await v.执行技能效果({
+    // 使用vibe执行技能效果 - 传入battleState，返回Partial<BattleState>
+    const battleStateUpdate = await v.执行技能效果({
+      battleState: battleState,
       技能类型: skill.type,
       技能名称: skill.name,
-      施法者单位: unit,
-      敌人单位列表: battleState.enemyUnits,
-      友军单位列表: battleState.playerUnits
-    })(z.object({
-      description: z.string(),
-      damage: z.number().optional(),
-      heal: z.number().optional(),
-      buffs: z.array(z.string()).optional()
-    }));
-    
-    // 应用技能效果
-    const result = skillResult as any;
-    if (result.damage && result.damage > 0) {
-      // 对所有敌人造成伤害
-      battleState.enemyUnits.forEach(enemy => {
-        enemy.hp -= result.damage;
-      });
-      // 移除死亡单位
-      battleState.enemyUnits = battleState.enemyUnits.filter(u => u.hp > 0);
+      施法者单位: unit
+    })(BattleStateUpdateSchema);
+
+    const update = battleStateUpdate as z.infer<typeof BattleStateUpdateSchema>;
+
+    // 应用返回的battleState更新
+    if (update.enemyUnits) {
+      battleState.enemyUnits = update.enemyUnits as Unit[];
     }
-    
-    if (result.heal && result.heal > 0) {
-      // 治疗所有玩家单位
-      battleState.playerUnits.forEach(player => {
-        player.hp = Math.min(player.hp + result.heal, player.maxHp);
-      });
+    if (update.playerUnits) {
+      battleState.playerUnits = update.playerUnits as Unit[];
     }
-    
-    res.json({ success: true, battleState, skillName: skill.name, description: result.description });
+    if (update.currentTurn !== undefined) {
+      battleState.currentTurn = update.currentTurn;
+    }
+
+    // 切换到敌人回合
+    battleState.currentTurn = 'enemy';
+
+    res.json({ success: true, battleState, skillName: skill.name });
   } catch (error) {
     console.error('使用技能失败:', error);
     res.status(500).json({ error: '使用技能失败' });
@@ -580,69 +797,84 @@ app.post('/api/game/battle/enemyTurn', async (req, res) => {
   try {
     const battleState = gameState!.currentBattle!;
     const logs: string[] = [];
-    
+
+    debugLog('开始敌人回合', {
+      enemyCount: battleState.enemyUnits.length,
+      playerCount: battleState.playerUnits.length
+    });
+
     // 对每个敌人执行AI行动
     for (const enemy of battleState.enemyUnits) {
-      // 使用vibe决定敌人行动
-      const action = await v.决定敌人行动({
-        敌人单位: enemy,
-        玩家单位列表: battleState.playerUnits,
-        战场信息: battleState.battlefield
-      })(z.object({
-        type: z.enum(['attack', 'move', 'wait']),
-        targetId: z.string().optional(),
-        targetX: z.number().optional(),
-        targetY: z.number().optional(),
-        description: z.string()
-      }));
-      
-      const actionResult = action as any;
-      
+      debugLog(`敌人 ${enemy.name} 行动中...`, {
+        pos: { x: enemy.x, y: enemy.y }
+      });
+
+      // 使用vibe决定敌人行动 - 传入battleState，返回Partial<BattleState>
+      const battleStateUpdate = await v.决定敌人行动({
+        battleState: battleState,
+        敌人单位: enemy
+      })(BattleStateUpdateSchema);
+
+      const actionResult = battleStateUpdate as any;
+      debugLog(`敌人 ${enemy.name} 行动更新`, actionResult);
+
+      // 应用返回的battleState更新
+      if (actionResult.playerUnits) {
+        battleState.playerUnits = actionResult.playerUnits;
+      }
+      if (actionResult.enemyUnits) {
+        battleState.enemyUnits = actionResult.enemyUnits;
+      }
+
       switch (actionResult.type) {
         case 'attack':
-          if (actionResult.targetId) {
-            const target = battleState.playerUnits.find(u => u.id === actionResult.targetId);
-            if (target) {
-              const damage = await v.计算攻击伤害({
-                攻击者攻击力: enemy.attack,
-                防御者防御力: target.defense,
-                攻击者速度: enemy.speed,
-                防御者速度: target.speed,
-                是否是Boss战: battleState.isBossBattle
-              })(z.number());
-              
-              target.hp -= Math.floor(damage as any);
-              logs.push(`【${enemy.name}】攻击 ${target.name}，造成 ${damage} 点伤害`);
-              
-              // 检查是否死亡
-              if (target.hp <= 0) {
-                battleState.playerUnits = battleState.playerUnits.filter(u => u.id !== target.id);
-                logs.push(`【${target.name}】被击败！`);
-              }
-            }
+          // 使用vibe计算敌人攻击伤害 - 传入battleState和相关信息，返回Partial<BattleState>
+          const attackUpdate = await v.计算攻击伤害({
+            battleState: battleState,
+            attacker: enemy,
+            target: battleState.playerUnits[0] || null
+          })(BattleStateUpdateSchema);
+
+          const update = attackUpdate as z.infer<typeof BattleStateUpdateSchema>;
+
+          // 应用返回的battleState更新
+          if (update.playerUnits) {
+            battleState.playerUnits = update.playerUnits as Unit[];
           }
+          if (update.enemyUnits) {
+            battleState.enemyUnits = update.enemyUnits as Unit[];
+          }
+
+          logs.push(`【${enemy.name}】攻击完成`);
           break;
-          
+
         case 'move':
           if (actionResult.targetX !== undefined && actionResult.targetY !== undefined) {
+            const oldPos = { x: enemy.x, y: enemy.y };
             enemy.x = actionResult.targetX;
             enemy.y = actionResult.targetY;
+            debugLog(`【${enemy.name}】移动`, { from: oldPos, to: { x: enemy.x, y: enemy.y } });
             logs.push(`【${enemy.name}】移动到 (${actionResult.targetX}, ${actionResult.targetY})`);
           }
           break;
-          
+
         case 'wait':
+          debugLog(`【${enemy.name}】等待`);
           logs.push(`【${enemy.name}】等待`);
           break;
       }
     }
-    
+
     // 切换回玩家回合
     battleState.currentTurn = 'player';
-    
+    debugLog('敌人回合结束，切换到玩家回合', {
+      remainingEnemies: battleState.enemyUnits.length,
+      remainingPlayers: battleState.playerUnits.length
+    });
+
     res.json({ success: true, battleState, logs });
   } catch (error) {
-    console.error('敌人回合执行失败:', error);
+    debugError('敌人回合执行失败', error);
     res.status(500).json({ error: '敌人回合执行失败' });
   }
 });
@@ -652,19 +884,12 @@ app.post('/api/game/battle/nextWave', async (req, res) => {
   try {
     const battleState = gameState!.currentBattle!;
     battleState.currentWave++;
-    
-    // 使用vibe生成新一波敌人
+
+    // 使用vibe生成新一波敌人 - 传入完整battleState对象
     const enemyCount = Math.floor(Math.random() * 3) + 2;
-    const currentLayer = gameState!.currentLayer;
-    const currentLevel = gameState!.currentLevel;
-    
     const newEnemies = await Promise.all(
       Array.from({ length: enemyCount }, async (_, i) => {
-        const enemy = await v.生成一个普通敌人({
-          层数: `game-level-${currentLayer}`,
-          敌人名称: `敌人${battleState.currentWave}-${i + 1}`,
-          当前关卡: currentLevel
-        })(UnitSchema);
+        const enemy = await v.生成一个普通敌人(battleState)(UnitSchema);
         return {
           ...(enemy as any),
           x: 3,
@@ -673,9 +898,9 @@ app.post('/api/game/battle/nextWave', async (req, res) => {
         };
       })
     );
-    
+
     battleState.enemyUnits = newEnemies;
-    
+
     res.json({ success: true, battleState });
   } catch (error) {
     console.error('下一波敌人失败:', error);
@@ -688,19 +913,19 @@ app.post('/api/game/battle/end', async (req, res) => {
   try {
     const { victory } = req.body;
     let rewards = '';
-    
+
     if (victory) {
-      // 使用vibe生成战斗奖励
-      rewards = await v.生成战斗奖励({
-        层数: `game-layer-${gameState!.currentLayer}`,
-        关卡: `game-level-${gameState!.currentLevel}`
-      })(z.string()) as string;
+      // 使用vibe生成战斗奖励 - 传入完整gameState对象
+      const rewardResult = await v.生成战斗奖励(gameState)(z.object({
+        奖励描述: z.string()
+      }));
+      rewards = (rewardResult as any).奖励描述;
     }
-    
+
     gameState!.currentBattle = null;
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       message: victory ? '战斗胜利！你战胜了所有敌人！' : '战斗失败！你的将领们全部倒下了...',
       rewards
     });
@@ -713,8 +938,25 @@ app.post('/api/game/battle/end', async (req, res) => {
 // 启动服务器
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`游戏服务器运行在 http://localhost:${PORT}`);
-  console.log('请在浏览器中打开 http://localhost:3000/index.html');
+  console.log(`╔═════════════════════════════════════════════╗`);
+  console.log(`║     游戏服务器已启动                           ║`);
+  console.log(`╠═════════════════════════════════════════════╣`);
+  console.log(`║  端口: ${PORT.toString().padEnd(35)}║`);
+  console.log(`║  URL:  http://localhost:${PORT}${' '.repeat(23 - PORT.toString().length)}║`);
+  console.log(`║  Debug: ${DEBUG ? '开启' : '关闭'}${' '.repeat(33)}║`);
+  console.log(`╠═════════════════════════════════════════════╣`);
+  console.log(`║  API端点:                                    ║`);
+  console.log(`║    - GET  /api/debug/state                   ║`);
+  console.log(`║    - POST /api/debug/reset                   ║`);
+  console.log(`║    - POST /api/debug/setLevel                ║`);
+  console.log(`║    - GET  /api/debug/allStates               ║`);
+  console.log(`║    - POST /api/game/start                    ║`);
+  console.log(`║    - GET  /api/game/generals/available       ║`);
+  console.log(`║    - POST /api/game/battle/start             ║`);
+  console.log(`╚═════════════════════════════════════════════╝`);
+  console.log('');
+  console.log(`📝 请在浏览器中打开 http://localhost:${PORT}/index.html`);
+  console.log('');
 });
 
 export default app;

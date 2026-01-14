@@ -4,6 +4,13 @@
   box-sizing: border-box;
 }
 
+/* 全局文本换行支持 - 使AI生成的换行文本正确显示 */
+p, h1, h2, h3, h4, h5, h6, label, span, div {
+  white-space: pre-wrap;     /* 保留换行符和空格 */
+  word-wrap: break-word;    /* 长单词换行 */
+  word-break: break-word;    /* 强制换行 */
+}
+
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -50,6 +57,8 @@ body {
   font-size: 1.2em;
   color: #666;
   margin-bottom: 30px;
+  white-space: pre-wrap;  /* 支持换行 */
+  word-wrap: break-word;    /* 长单词换行 */
 }
 
 /* 主菜单界面 */
@@ -106,7 +115,6 @@ body {
   color: #555;
   white-space: pre-wrap; /* 支持换行 */
   word-wrap: break-word; /* 长单词换行 */
-  line-height: 1.6; /* 增加行高，提高可读性 */
 }
 
 .menu-actions {
@@ -214,7 +222,6 @@ button {
   font-style: italic;
   white-space: pre-wrap;  /* 支持换行 */
   word-wrap: break-word;    /* 长单词换行 */
-  line-height: 1.6;         /* 增加行高 */
 }
 
 .stats {
@@ -439,7 +446,6 @@ button {
   color: #666;
   white-space: pre-wrap;     /* 支持换行 */
   word-wrap: break-word;    /* 长单词换行 */
-  line-height: 1.6;         /* 增加行高 */
 }
 
 .action-buttons {
@@ -479,7 +485,6 @@ button {
 #battle-log-content {
   font-size: 0.85em;
   color: #666;
-  line-height: 1.6;
   white-space: pre-wrap;  /* 支持换行 */
   word-wrap: break-word;    /* 长单词换行 */
 }
@@ -526,6 +531,8 @@ button {
   font-size: 1.2em;
   color: #666;
   margin-bottom: 30px;
+  white-space: pre-wrap;  /* 支持换行 */
+  word-wrap: break-word;    /* 长单词换行 */
 }
 
 /* 响应式设计 */
