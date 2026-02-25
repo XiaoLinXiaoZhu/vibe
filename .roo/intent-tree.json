@@ -1,0 +1,867 @@
+{
+	"version": 1,
+	"nodes": {
+		"e4fe10c7-ee6c-41be-bd44-f03c70f322bb": {
+			"id": "e4fe10c7-ee6c-41be-bd44-f03c70f322bb",
+			"shortId": "G1",
+			"type": "goal",
+			"content": "让 vibe 成为真正的\"万能函数\"——能处理计算、知识、外部信息三类任务，并有 benchmark 量化验证其能力边界",
+			"status": "done",
+			"parentId": null,
+			"childrenIds": [
+				"abc9f4fb-229c-4605-8ad9-8624b0307f1d",
+				"34e234ca-2425-46b0-8cee-9b3142bee1b9",
+				"e7b656f4-dfc7-4d36-81ff-69f6a9a1f497"
+			],
+			"codeBindings": [],
+			"createdBy": {
+				"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+				"timestamp": "2026-02-25T03:56:20.667Z",
+				"action": "created"
+			},
+			"modifiedBy": [
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T06:00:23.894Z",
+					"action": "updated: content, status→done"
+				}
+			],
+			"assumption": "用户明确说\"进一步打磨该玩具\"，两个主要优化方向：prompt 打磨和组建 benchmark。但通过对话发现，底层还有一个架构问题（递归/多轮的掌控力），三者共同指向一个更高层的目标：让 vibe 成为真正的\"万能函数\"。",
+			"maxChildIndex": 3
+		},
+		"faf99262-d850-4ccd-9e71-f118125667bb": {
+			"id": "faf99262-d850-4ccd-9e71-f118125667bb",
+			"shortId": "O2.1",
+			"type": "objective",
+			"content": "通过 prompt 优化减少不必要的 v 递归：引导模型善用 JS 原生能力（定义辅助函数、循环、逻辑组合），只在真正需要 AI 知识时才委托 v 调用。框架层面保持\"生成代码→执行\"范式不变",
+			"status": "in_progress",
+			"parentId": "f6cbd4e9-1ada-45ca-adde-70b2c3f53e0f",
+			"childrenIds": [
+				"5cf9fdbd-4014-4917-ad01-88bf83cc0d79",
+				"4ec2d586-1150-4ddc-8f73-b240d1c1fe0b",
+				"60b14643-e812-4251-9eaf-ac36194d9d83"
+			],
+			"codeBindings": [],
+			"createdBy": {
+				"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+				"timestamp": "2026-02-25T03:56:41.820Z",
+				"action": "created"
+			},
+			"modifiedBy": [
+				{
+					"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+					"timestamp": "2026-02-25T04:02:42.187Z",
+					"action": "updated: content, status→planned"
+				},
+				{
+					"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+					"timestamp": "2026-02-25T04:06:46.634Z",
+					"action": "updated: content, status→planned"
+				},
+				{
+					"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+					"timestamp": "2026-02-25T04:06:53.986Z",
+					"action": "reparented from e4fe10c7-ee6c-41be-bd44-f03c70f322bb to f6cbd4e9-1ada-45ca-adde-70b2c3f53e0f"
+				},
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T05:05:12.176Z",
+					"action": "updated: content, status→in_progress"
+				}
+			],
+			"assumption": "当前所有任务都走\"生成代码→执行\"的单一管道，导致知识型任务被迫通过递归调用 v[prompt]() 来获取 LLM 知识，这是递归深度问题和 prompt 过于固化的根本原因。解决这个架构问题是 prompt 优化和能力扩展的前提。",
+			"maxChildIndex": 3
+		},
+		"e39d625c-c7ca-4d92-aeda-80b3bd741cc5": {
+			"id": "e39d625c-c7ca-4d92-aeda-80b3bd741cc5",
+			"shortId": "O2.2",
+			"type": "objective",
+			"content": "重写 prompt 体系：从\"预编码决策树\"转向\"推理引导\"，教会模型如何思考而非硬编码路径选择",
+			"status": "planned",
+			"parentId": "f6cbd4e9-1ada-45ca-adde-70b2c3f53e0f",
+			"childrenIds": [
+				"05c8732e-4435-44dc-be77-49d4989ef705"
+			],
+			"codeBindings": [],
+			"createdBy": {
+				"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+				"timestamp": "2026-02-25T03:56:42.384Z",
+				"action": "created"
+			},
+			"modifiedBy": [
+				{
+					"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+					"timestamp": "2026-02-25T04:06:53.986Z",
+					"action": "reparented from e4fe10c7-ee6c-41be-bd44-f03c70f322bb to f6cbd4e9-1ada-45ca-adde-70b2c3f53e0f"
+				}
+			],
+			"assumption": "用户明确说\"当前模式过于固化，实际上是预编译\"，\"更好的方式是通过推理指导模型如何思考\"。这依赖于 O1.1 的架构分层——有了分层路由后，每层的 prompt 可以更专注、更自然。",
+			"maxChildIndex": 1
+		},
+		"abc9f4fb-229c-4605-8ad9-8624b0307f1d": {
+			"id": "abc9f4fb-229c-4605-8ad9-8624b0307f1d",
+			"shortId": "O1.1",
+			"type": "objective",
+			"content": "扩展运行时能力：注入 shell/fetch，同时重构注入方式为全局对象避免参数膨胀",
+			"status": "done",
+			"parentId": "e4fe10c7-ee6c-41be-bd44-f03c70f322bb",
+			"childrenIds": [
+				"a18a3031-5526-4c22-94ff-b6f10ca40f0d"
+			],
+			"codeBindings": [],
+			"createdBy": {
+				"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+				"timestamp": "2026-02-25T03:56:42.505Z",
+				"action": "created"
+			},
+			"modifiedBy": [
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T05:26:11.027Z",
+					"action": "updated: content, status→in_progress"
+				},
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T05:49:58.692Z",
+					"action": "updated: content, status→done"
+				}
+			],
+			"assumption": "用户明确说\"想要直接给模型 shell 执行能力\"。这是 L3（交互层）任务的基础设施，也是 benchmark 中\"网页浏览/信息获取\"分类的前提。",
+			"maxChildIndex": 1
+		},
+		"34e234ca-2425-46b0-8cee-9b3142bee1b9": {
+			"id": "34e234ca-2425-46b0-8cee-9b3142bee1b9",
+			"shortId": "O1.2",
+			"type": "objective",
+			"content": "错误重试机制：在 handleCall 中，代码执行失败或 schema 验证失败时，将错误信息反馈给 LLM 重新生成代码，最多重试 2 次",
+			"status": "done",
+			"parentId": "e4fe10c7-ee6c-41be-bd44-f03c70f322bb",
+			"childrenIds": [
+				"6cbd1ffb-4eb2-499d-9e8b-9296a5f79276"
+			],
+			"codeBindings": [],
+			"createdBy": {
+				"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+				"timestamp": "2026-02-25T03:56:42.626Z",
+				"action": "created"
+			},
+			"modifiedBy": [
+				{
+					"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+					"timestamp": "2026-02-25T04:03:14.277Z",
+					"action": "updated: content, status→planned"
+				},
+				{
+					"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+					"timestamp": "2026-02-25T04:07:06.231Z",
+					"action": "updated: content, status→planned"
+				},
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T05:50:06.643Z",
+					"action": "updated: content, status→in_progress"
+				},
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T05:52:39.439Z",
+					"action": "updated: content, status→done"
+				}
+			],
+			"assumption": "专家分析指出这是\"最高 ROI 的改进\"。当前代码执行失败直接抛错，但错误信息是极高质量的 prompt，可以让 LLM 修正。这不是 Agent 循环（循环条件是\"代码失败\"而非\"任务未完成\"，有硬上限），符合用户\"不想走向复杂和不可控\"的约束。",
+			"maxChildIndex": 1
+		},
+		"e7b656f4-dfc7-4d36-81ff-69f6a9a1f497": {
+			"id": "e7b656f4-dfc7-4d36-81ff-69f6a9a1f497",
+			"shortId": "O1.3",
+			"type": "objective",
+			"content": "组建 benchmark 体系：5 维度 20 个用例 + LLM-as-judge 评分，bun run benchmark 可运行",
+			"status": "done",
+			"parentId": "e4fe10c7-ee6c-41be-bd44-f03c70f322bb",
+			"childrenIds": [
+				"2ee775bc-13e7-4ce8-8456-8255e2e8c62e"
+			],
+			"codeBindings": [],
+			"createdBy": {
+				"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+				"timestamp": "2026-02-25T03:56:42.749Z",
+				"action": "created"
+			},
+			"modifiedBy": [
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T05:57:18.588Z",
+					"action": "updated: content, status→in_progress"
+				},
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T06:00:14.288Z",
+					"action": "updated: content, status→done"
+				}
+			],
+			"assumption": "用户明确要求。benchmark 是验证上述所有改进效果的量化手段，也是持续迭代的基础。依赖 O1.1-O1.4 的能力改进才能在所有维度上有意义的得分。",
+			"maxChildIndex": 1
+		},
+		"5cf9fdbd-4014-4917-ad01-88bf83cc0d79": {
+			"id": "5cf9fdbd-4014-4917-ad01-88bf83cc0d79",
+			"shortId": "A2.1.1",
+			"type": "approach",
+			"content": "在 handleCall 中引入\"任务分类\"步骤：LLM 第一次调用返回 structured output（type: \"compute\"|\"knowledge\"|\"tool\" + content），然后由代码层路由到不同的执行路径——compute 走代码生成执行，knowledge 直接返回 LLM 文本，tool 走代码生成+注入工具执行",
+			"status": "pruned",
+			"parentId": "faf99262-d850-4ccd-9e71-f118125667bb",
+			"childrenIds": [],
+			"codeBindings": [],
+			"createdBy": {
+				"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+				"timestamp": "2026-02-25T03:57:11.578Z",
+				"action": "created"
+			},
+			"modifiedBy": [
+				{
+					"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+					"timestamp": "2026-02-25T04:02:42.761Z",
+					"action": "pruned: 原方案是\"先分类再路由到不同管道\"，但用户选择了 Trampoline 方向——这是一个更根本的架构变化，分类路由可以作为 Trampoline runner 内部的一个策略，而非独立的架构层。需要重新设计 approach。"
+				}
+			],
+			"assumption": "两步调用（先分类再执行）比让 LLM 在 prompt 里自选路径更可控。分类错误的代价（多一次 LLM 调用做 fallback）远低于递归失控的代价。也可以考虑合并为一次调用（LLM 同时返回 type 和 content），减少延迟。如果分类引入的延迟不可接受，可以尝试合并方案或启发式规则。",
+			"maxChildIndex": 0
+		},
+		"05c8732e-4435-44dc-be77-49d4989ef705": {
+			"id": "05c8732e-4435-44dc-be77-49d4989ef705",
+			"shortId": "A2.2.1",
+			"type": "approach",
+			"content": "已废弃：基于 Trampoline 协议重写 prompt。用户选择保持代码生成范式，不引入 Step 协议。",
+			"status": "superseded",
+			"parentId": "e39d625c-c7ca-4d92-aeda-80b3bd741cc5",
+			"childrenIds": [],
+			"codeBindings": [],
+			"createdBy": {
+				"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+				"timestamp": "2026-02-25T03:57:12.145Z",
+				"action": "created"
+			},
+			"modifiedBy": [
+				{
+					"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+					"timestamp": "2026-02-25T04:03:13.599Z",
+					"action": "updated: content, status→planned"
+				},
+				{
+					"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+					"timestamp": "2026-02-25T04:07:05.503Z",
+					"action": "updated: content, status→superseded"
+				}
+			],
+			"assumption": "依赖 O1.1 的分类路由——有了分类后，每条路径的 prompt 不再需要覆盖所有情况，可以更专注。如果 O1.1 采用合并方案（一次调用），则 prompt 需要同时引导分类和生成，设计会不同。",
+			"maxChildIndex": 0
+		},
+		"a18a3031-5526-4c22-94ff-b6f10ca40f0d": {
+			"id": "a18a3031-5526-4c22-94ff-b6f10ca40f0d",
+			"shortId": "A1.1.1",
+			"type": "approach",
+			"content": "在 executeCode 中注入 shell（child_process.exec 的 Promise 封装）和 fetch，与 v/z/args 同样方式作为 AsyncFunction 参数传入。prompt 中告知模型这些工具的存在和用法",
+			"status": "planned",
+			"parentId": "abc9f4fb-229c-4605-8ad9-8624b0307f1d",
+			"childrenIds": [
+				"15ffb7e7-2c3a-417c-91a7-291f2a30184d"
+			],
+			"codeBindings": [],
+			"createdBy": {
+				"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+				"timestamp": "2026-02-25T03:57:12.264Z",
+				"action": "created"
+			},
+			"modifiedBy": [
+				{
+					"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+					"timestamp": "2026-02-25T04:03:14.157Z",
+					"action": "updated: content, status→planned"
+				},
+				{
+					"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+					"timestamp": "2026-02-25T04:07:06.085Z",
+					"action": "updated: content, status→planned"
+				}
+			],
+			"assumption": "用户明确要 shell 能力。注入方式与当前 v/z/args 一致（作为 AsyncFunction 参数传入）。安全风险由用户自行承担（项目本身就标注\"不保证安全性，请勿用于生产环境\"）。如果 shell 注入导致不可控的安全问题，可以考虑加白名单或沙箱。",
+			"maxChildIndex": 1
+		},
+		"6cbd1ffb-4eb2-499d-9e8b-9296a5f79276": {
+			"id": "6cbd1ffb-4eb2-499d-9e8b-9296a5f79276",
+			"shortId": "A1.2.1",
+			"type": "approach",
+			"content": "在 handleCall 的 catch 块中加入重试循环：捕获执行异常或 schema 验证失败后，将原始代码+错误信息+原始 prompt 发给 LLM 重新生成，硬上限 2 次重试",
+			"status": "planned",
+			"parentId": "34e234ca-2425-46b0-8cee-9b3142bee1b9",
+			"childrenIds": [
+				"98361b67-a23d-456c-8c33-2f08d5e26bb6"
+			],
+			"codeBindings": [],
+			"createdBy": {
+				"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+				"timestamp": "2026-02-25T03:57:12.384Z",
+				"action": "created"
+			},
+			"modifiedBy": [
+				{
+					"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+					"timestamp": "2026-02-25T04:03:14.407Z",
+					"action": "updated: content, status→planned"
+				},
+				{
+					"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+					"timestamp": "2026-02-25T04:07:06.366Z",
+					"action": "updated: content, status→planned"
+				}
+			],
+			"assumption": "错误重试是\"编译器式多轮修正\"，不是 Agent 循环。硬上限 2 次保证可预测性（最多 3 次 LLM 调用）。如果 2 次重试仍失败，说明任务超出能力，继续重试无意义。",
+			"maxChildIndex": 1
+		},
+		"2ee775bc-13e7-4ce8-8456-8255e2e8c62e": {
+			"id": "2ee775bc-13e7-4ce8-8456-8255e2e8c62e",
+			"shortId": "A1.3.1",
+			"type": "approach",
+			"content": "设计 benchmark 框架：每个维度 5-10 个测试用例，每个用例包含输入、期望行为描述、评分标准（rubric）。运行时对每个用例执行 vibe 调用，然后用另一个 LLM 调用按 rubric 打分（1-10），输出汇总报告",
+			"status": "planned",
+			"parentId": "e7b656f4-dfc7-4d36-81ff-69f6a9a1f497",
+			"childrenIds": [
+				"e3d870f8-6b6f-4818-9cf2-3bcf24770257"
+			],
+			"codeBindings": [],
+			"createdBy": {
+				"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+				"timestamp": "2026-02-25T03:57:12.502Z",
+				"action": "created"
+			},
+			"modifiedBy": [],
+			"assumption": "LLM-as-judge 是当前评估开放性输出的主流方法。评分标准（rubric）需要针对每个维度设计：数学计算看正确性、算法逻辑看正确性+效率、趣味问题看创意+相关性、角色扮演看一致性+沉浸感、信息获取看准确性+完整性。如果 LLM 打分本身不可靠，可以考虑多次打分取平均或引入人工校验。",
+			"maxChildIndex": 1
+		},
+		"4ec2d586-1150-4ddc-8f73-b240d1c1fe0b": {
+			"id": "4ec2d586-1150-4ddc-8f73-b240d1c1fe0b",
+			"shortId": "A2.1.2",
+			"type": "approach",
+			"content": "Trampoline Runner 架构：重新定义 LLM 输出协议和框架执行循环\n\n**LLM 输出协议**（三种 Step 类型）：\n- `{ type: \"done\", value: any }` — 任务完成，直接返回值（覆盖 L1 计算 + L2 知识）\n- `{ type: \"call\", name: string, args: any[], schema?: ZodType }` — 需要调用另一个 vibe 函数，框架来执行\n- `{ type: \"continue\", code: string }` — 需要执行一段代码（用于 L3 交互层，代码中可用 shell/fetch）\n\n**框架执行循环**（在 handleCall 中）：\n```\nwhile (step.type !== \"done\" && stepCount < maxSteps) {\n  if (step.type === \"call\") → 框架调用 LLM 生成下一步\n  if (step.type === \"continue\") → 框架执行代码，拿到结果作为下一步输入\n  stepCount++\n}\n```\n\n**关键变化**：\n1. LLM 不再生成\"可执行的 JS 函数体\"，而是生成 JSON 格式的 Step 描述\n2. 框架持有控制权，maxSteps 替代 maxDepth（循环计数器 vs 递归深度）\n3. 每一步的输入/输出都可被框架检查、日志、缓存\n4. 错误重试自然融入循环（某步失败 → 重新生成该步）",
+			"status": "pruned",
+			"parentId": "faf99262-d850-4ccd-9e71-f118125667bb",
+			"childrenIds": [],
+			"codeBindings": [],
+			"createdBy": {
+				"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+				"timestamp": "2026-02-25T04:02:59.362Z",
+				"action": "created"
+			},
+			"modifiedBy": [
+				{
+					"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+					"timestamp": "2026-02-25T04:06:46.019Z",
+					"action": "pruned: 用户明确不想要框架层面的 Trampoline 控制。核心范式保持\"LLM 生成 JS 代码 → 执行\"不变。Trampoline 思想应该体现在 prompt 中引导模型写更好的代码，而非框架架构变更。"
+				}
+			],
+			"assumption": "Trampoline 模式是用户确认的方向。核心假设：LLM 能够可靠地生成符合 Step 协议的 JSON 输出（而非自由格式的 JS 代码）。如果 LLM 难以遵守协议（输出格式不稳定），可能需要 fallback 到当前的代码生成模式，或用 structured output / function calling API 来强制格式。",
+			"maxChildIndex": 0
+		},
+		"f6cbd4e9-1ada-45ca-adde-70b2c3f53e0f": {
+			"id": "f6cbd4e9-1ada-45ca-adde-70b2c3f53e0f",
+			"shortId": "G2",
+			"type": "goal",
+			"content": "重写 prompt 体系：从预编码决策树转向推理引导，教模型善用 JS 能力、自主判断任务策略，减少不必要的 v 递归",
+			"status": "done",
+			"parentId": null,
+			"childrenIds": [
+				"faf99262-d850-4ccd-9e71-f118125667bb",
+				"e39d625c-c7ca-4d92-aeda-80b3bd741cc5"
+			],
+			"codeBindings": [],
+			"createdBy": {
+				"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+				"timestamp": "2026-02-25T04:06:53.986Z",
+				"action": "created"
+			},
+			"modifiedBy": [
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T05:05:05.764Z",
+					"action": "updated: content, status→in_progress"
+				},
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T06:00:24.450Z",
+					"action": "updated: content, status→done"
+				}
+			],
+			"maxChildIndex": 2
+		},
+		"60b14643-e812-4251-9eaf-ac36194d9d83": {
+			"id": "60b14643-e812-4251-9eaf-ac36194d9d83",
+			"shortId": "A2.1.3",
+			"type": "approach",
+			"content": "基于\"思维分子结构\"理论重写 prompt 体系：Facts→Reasoning→Conclusions 模式的推理引导式 prompt",
+			"status": "in_progress",
+			"parentId": "faf99262-d850-4ccd-9e71-f118125667bb",
+			"childrenIds": [
+				"abf0a1ef-3f1d-4098-ba6b-f48818145e4f"
+			],
+			"codeBindings": [],
+			"createdBy": {
+				"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+				"timestamp": "2026-02-25T04:07:18.390Z",
+				"action": "created"
+			},
+			"modifiedBy": [
+				{
+					"taskId": "019c92e4-9f0a-75fb-8e0d-ee366b74158c",
+					"timestamp": "2026-02-25T05:02:39.550Z",
+					"action": "updated: content, status→planned"
+				},
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T05:05:18.545Z",
+					"action": "updated: content, status→in_progress"
+				}
+			],
+			"assumption": "用户确认保持代码生成范式，通过 prompt 引导模型写更好的代码。O2.1（减少递归）和 O2.2（推理引导）本质上是同一件事——好的 prompt 自然会让模型减少不必要的递归。将两者合并为一个 approach 实施。",
+			"maxChildIndex": 1
+		},
+		"abf0a1ef-3f1d-4098-ba6b-f48818145e4f": {
+			"id": "abf0a1ef-3f1d-4098-ba6b-f48818145e4f",
+			"shortId": "I2.1.3.1",
+			"type": "impl",
+			"content": "重写 src/llm.ts 中 generateFunctionCode() 的 systemPrompt 和 userPrompt",
+			"status": "done",
+			"parentId": "60b14643-e812-4251-9eaf-ac36194d9d83",
+			"childrenIds": [],
+			"codeBindings": [
+				{
+					"commitHash": "3a0cce413017d26028daaadb5678def66a0227ca",
+					"commitMessage": "[intent:I2.1.3.1] 重写 prompt 体系：从 PATH A/B/C 声明式决策树改为 Facts→Reasoning→Conclusions 推理引导式 prompt\n\n- System prompt: 用真正的元认知振荡（Deep→Reflect→Explore→Deep）替代硬编码路径\n- User prompt: 从冗长的 DECISION GUIDE 精简为任务描述+参数+返回类型\n- isLastCall prompt: 重写为简洁的推理引导风格\n- 推理链中包含真正的回溯质疑、替代路径探索和边界验证\n\n测试验证：\n- 数学运算(add/fibonacci): 纯 JS，零递归 ✅\n- 知识型(tellAJoke): 直接返回内容，零递归 ✅\n- 字符串操作(reverseString): 纯 JS ✅\n- 中文函数名(计算数组的和): 正常工作 ✅\n- 角色扮演(作为猫娘回复): 直接返回，零递归 ✅\n- 结构化输出(generateUserProfile): 匹配 schema ✅",
+					"files": [
+						".roo/intent-tree.json",
+						"GAME_SUMMARY.md",
+						"\"docs/CoT\\344\\270\\216FewShot\\350\\256\\276\\350\\256\\241\\346\\214\\207\\345\\215\\227.md\"",
+						"\"docs/SPIRIT-v5-\\351\\207\\215\\345\\272\\246\\346\\216\\250\\347\\220\\206\\345\\256\\236\\351\\252\\214\\350\\256\\260\\345\\275\\225.md\"",
+						"docs/optimization-plan.md",
+						"src/llm.ts"
+					],
+					"diffSummary": "6 file(s), +1474 -663",
+					"timestamp": "2026-02-25T05:13:36.429Z"
+				},
+				{
+					"commitHash": "a2ae669be8e03d3725fea1c59f96ff984db06d8a",
+					"commitMessage": "[intent:I2.1.3.1] 增强 prompt 推理链：引导模型理解和利用 args 内容而非简单拼接\n\n在 REASONING 段落中新增对\"args 可见但需要 AI 理解\"场景的探索：\n- 回溯质疑之前的边界定义\n- 用\"作为猫娘回复\"的反例说明简单拼接的问题\n- 引导模型在 args 可见时深入理解内容并生成针对性回复\n\n测试验证：\n- 作为猫娘回复(\"今天天气怎么样\") → 真正回应天气话题 ✅\n- 作为猫娘回复(\"我今天心情不好\") → 理解情绪给出安慰 ✅\n- 用简单的话解释(\"量子纠缠\") → 生动的类比解释 ✅\n- add(5,3) → 8 纯 JS ✅",
+					"files": [
+						"src/cache.ts",
+						"src/llm.ts"
+					],
+					"diffSummary": "2 file(s), +6 -2",
+					"timestamp": "2026-02-25T05:23:59.514Z"
+				},
+				{
+					"commitHash": "56c7ce6e307545b87dfb6095145d6cdcd78cb68e",
+					"commitMessage": "[intent:I2.1.3.1] 增强 prompt 推理链：引导模型理解对象参数的自解释性\n\n- FACTS: 更新 args 描述，说明用户可能传位置参数或命名对象\n- REASONING: 新增推理段落，从位置参数的局限性（args[0] 不自解释）\n  自然推导出对象参数的优势（键名即文档），引导模型用解构访问\n\n测试验证：\n- generateGreeting({name:\"Alice\", language:\"French\", style:\"formal\"})\n  → 生成 const {name, language, style} = args[0] ✅\n- add(5, 3) 位置参数仍正常 ✅",
+					"files": [
+						".roo/intent-tree.json",
+						"src/llm.ts"
+					],
+					"diffSummary": "2 file(s), +10 -3",
+					"timestamp": "2026-02-25T05:57:09.675Z"
+				}
+			],
+			"createdBy": {
+				"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+				"timestamp": "2026-02-25T05:05:27.904Z",
+				"action": "created"
+			},
+			"modifiedBy": [
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T05:05:35.706Z",
+					"action": "updated: content, status→in_progress"
+				},
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T05:13:36.429Z",
+					"action": "bound commit 3a0cce4"
+				},
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T05:13:36.429Z",
+					"action": "updated: status→done"
+				},
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T05:23:59.514Z",
+					"action": "bound commit a2ae669"
+				},
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T05:23:59.514Z",
+					"action": "updated: status→done"
+				},
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T05:57:09.675Z",
+					"action": "bound commit 56c7ce6"
+				},
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T05:57:09.675Z",
+					"action": "updated: status→done"
+				}
+			],
+			"assumption": "A2.1.3 是 prompt 重写方案。这个 impl 是唯一需要改动的文件——重写 src/llm.ts 中 generateFunctionCode() 的 systemPrompt 和 userPrompt。O2.2 的内容（重写 prompt 体系）实际上与 O2.1 的 A2.1.3 是同一件事，不需要单独实现。"
+		},
+		"15ffb7e7-2c3a-417c-91a7-291f2a30184d": {
+			"id": "15ffb7e7-2c3a-417c-91a7-291f2a30184d",
+			"shortId": "I1.1.1.1",
+			"type": "impl",
+			"content": "重构 executeCode() 的运行时注入方式：从多个 AsyncFunction 参数改为单个 context 对象 + 代码前注入解构，同时注入 shell 和 fetch 新能力",
+			"status": "done",
+			"parentId": "a18a3031-5526-4c22-94ff-b6f10ca40f0d",
+			"childrenIds": [],
+			"codeBindings": [
+				{
+					"commitHash": "fa824621cf28d5e02643ea4be4eaa474e0c30f3a",
+					"commitMessage": "[intent:I1.1.1.1] 重构运行时注入为全局对象 + 注入 shell/fetch 能力\n\n- executeCode(): 从多参数 AsyncFunction('args','v','z', code) 改为\n  单参数 AsyncFunction('_ctx', code)，代码前注入解构语句\n  const {args, v, z, shell, fetch} = _ctx\n- 新增 shell(): child_process.exec 的 Promise 封装，返回 {stdout, stderr}\n- fetch: 注入 globalThis.fetch\n- prompt FACTS 段落更新：告知模型 shell 和 fetch 的存在和用法\n- prompt REASONING 段落更新：新增外部数据获取的推理（shell/fetch vs v）\n\n测试验证：\n- 回归: add(5,3)=8 ✅, tellAJoke() ✅, reverseString(\"hello\")=\"olleh\" ✅\n- 新能力: listCurrentDirectory() 通过 shell 列出目录 ✅\n- 新能力: getCurrentDate() 获取真实日期 ✅",
+					"files": [
+						".roo/intent-tree.json",
+						"src/llm.ts",
+						"src/vibe.ts"
+					],
+					"diffSummary": "3 file(s), +72 -9",
+					"timestamp": "2026-02-25T05:29:05.773Z"
+				}
+			],
+			"createdBy": {
+				"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+				"timestamp": "2026-02-25T05:26:04.730Z",
+				"action": "created"
+			},
+			"modifiedBy": [
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T05:26:18.696Z",
+					"action": "updated: content, status→in_progress"
+				},
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T05:29:05.773Z",
+					"action": "bound commit fa82462"
+				},
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T05:29:05.773Z",
+					"action": "updated: status→done"
+				}
+			],
+			"assumption": "A1.1.1 是注入 shell/fetch 的方案。用户同时要求将注入方式从多参数改为全局对象。这两个改动紧密耦合——都涉及 executeCode() 的参数传递方式，应该一起做。改动范围：src/vibe.ts 的 executeCode() 和 src/llm.ts 的 prompt（告知模型新工具）。"
+		},
+		"98361b67-a23d-456c-8c33-2f08d5e26bb6": {
+			"id": "98361b67-a23d-456c-8c33-2f08d5e26bb6",
+			"shortId": "I1.2.1.1",
+			"type": "impl",
+			"content": "在 handleCall 中加入重试循环 + 在 generateFunctionCode 中支持 previousError 参数",
+			"status": "done",
+			"parentId": "6cbd1ffb-4eb2-499d-9e8b-9296a5f79276",
+			"childrenIds": [],
+			"codeBindings": [
+				{
+					"commitHash": "8c7611f52c8d008a8438a49dbb573a942f237efd",
+					"commitMessage": "[intent:I1.2.1.1] 实现错误重试机制：代码执行失败时自动反馈错误给 LLM 重新生成\n\n- llm.ts: generateFunctionCode() 新增 previousError 可选参数，\n  失败时将原始代码+错误信息追加到 userPrompt\n- vibe.ts: handleCall() 中 LLM 生成+执行部分包裹重试循环，\n  最多重试 2 次（共 3 次 LLM 调用），超过则抛出原始错误\n\n回归测试：add ✅, tellAJoke ✅, reverseString ✅, getCurrentDate ✅",
+					"files": [
+						".roo/intent-tree.json",
+						"src/examples/playground.ts",
+						"src/llm.ts",
+						"src/vibe.ts"
+					],
+					"diffSummary": "4 file(s), +99 -33",
+					"timestamp": "2026-02-25T05:52:31.514Z"
+				}
+			],
+			"createdBy": {
+				"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+				"timestamp": "2026-02-25T05:50:26.603Z",
+				"action": "created"
+			},
+			"modifiedBy": [
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T05:50:32.160Z",
+					"action": "updated: content, status→in_progress"
+				},
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T05:52:31.514Z",
+					"action": "bound commit 8c7611f"
+				},
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T05:52:31.514Z",
+					"action": "updated: status→done"
+				}
+			],
+			"assumption": "A1.2.1 是错误重试方案。实现方式：给 generateFunctionCode 加 previousError 可选参数（追加到 userPrompt），在 handleCall 的 LLM 生成+执行部分包裹 retry 循环。最多重试 2 次。"
+		},
+		"e3d870f8-6b6f-4818-9cf2-3bcf24770257": {
+			"id": "e3d870f8-6b6f-4818-9cf2-3bcf24770257",
+			"shortId": "I1.3.1.1",
+			"type": "impl",
+			"content": "创建 benchmark 框架：cases.ts + runner.ts + package.json script",
+			"status": "done",
+			"parentId": "2ee775bc-13e7-4ce8-8456-8255e2e8c62e",
+			"childrenIds": [],
+			"codeBindings": [
+				{
+					"commitHash": "bf00aa6cf838a1f466cf320d5a7b8c720b97ca11",
+					"commitMessage": "[intent:I1.3.1.1] 创建 benchmark 框架：5 维度 20 个用例 + LLM-as-judge 评分\n\n新增文件：\n- src/benchmark/cases.ts: 20 个测试用例，覆盖数学计算(5)、算法逻辑(5)、\n  趣味问题(3)、角色扮演(3)、信息获取(3) 五个维度\n  数学/算法类用 exactCheck 确定性断言，知识/创意类用 rubric + LLM 打分\n- src/benchmark/runner.ts: 执行器 + LLM-as-judge 评分 + 汇总报告\n  按维度统计平均分、通过率、失败用例列表\n- package.json: 新增 \"benchmark\" script\n\n验证：前 2 个确定性用例通过（add=579 ✅, factorial=3628800 ✅）",
+					"files": [
+						".roo/intent-tree.json",
+						"package.json",
+						"src/benchmark/cases.ts",
+						"src/benchmark/runner.ts"
+					],
+					"diffSummary": "4 file(s), +398 -6",
+					"timestamp": "2026-02-25T06:00:06.973Z"
+				}
+			],
+			"createdBy": {
+				"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+				"timestamp": "2026-02-25T05:57:29.714Z",
+				"action": "created"
+			},
+			"modifiedBy": [
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T05:57:37.184Z",
+					"action": "updated: content, status→in_progress"
+				},
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T06:00:06.973Z",
+					"action": "bound commit bf00aa6"
+				},
+				{
+					"taskId": "019c932f-0ce5-75fd-a43b-5b484a80566a",
+					"timestamp": "2026-02-25T06:00:06.973Z",
+					"action": "updated: status→done"
+				}
+			],
+			"assumption": "A1.3.1 是 benchmark 方案。保持简洁：cases.ts 定义所有用例（包含输入、评分方式、rubric），runner.ts 负责执行和汇总。数学/算法类用确定性断言，知识/创意类用 LLM-as-judge。"
+		},
+		"aee594a4-5d28-4896-aad8-049b57de520a": {
+			"id": "aee594a4-5d28-4896-aad8-049b57de520a",
+			"shortId": "G3",
+			"type": "goal",
+			"content": "实现将领战棋游戏示例：Express 后端 + 浏览器前端，核心内容（将领/敌人/战斗逻辑）由 v 函数动态生成",
+			"status": "planned",
+			"parentId": null,
+			"childrenIds": [
+				"a5a0575a-cd5e-4894-99e2-d21fa3b88d2c",
+				"19bd5cc9-e100-4e7e-bddd-a94387767b82",
+				"b8fd178e-24d3-4857-916a-e6940d75df99"
+			],
+			"codeBindings": [],
+			"createdBy": {
+				"taskId": "019c9377-712c-74d8-803e-3bf0fa651344",
+				"timestamp": "2026-02-25T06:24:32.853Z",
+				"action": "created"
+			},
+			"modifiedBy": [],
+			"assumption": "README 中已描述了将领战棋游戏的概念，game 目录为空。用户明确要求按 README 描述实现完整版本。这是一个全新的目标，与现有 G1/G2 无关。",
+			"maxChildIndex": 3
+		},
+		"a5a0575a-cd5e-4894-99e2-d21fa3b88d2c": {
+			"id": "a5a0575a-cd5e-4894-99e2-d21fa3b88d2c",
+			"shortId": "O3.1",
+			"type": "objective",
+			"content": "实现 Express 后端 API：提供游戏数据生成和战斗逻辑的 REST 接口",
+			"status": "planned",
+			"parentId": "aee594a4-5d28-4896-aad8-049b57de520a",
+			"childrenIds": [
+				"38f21559-dc7d-468c-b288-6b67f3838e19"
+			],
+			"codeBindings": [],
+			"createdBy": {
+				"taskId": "019c9377-712c-74d8-803e-3bf0fa651344",
+				"timestamp": "2026-02-25T06:24:43.460Z",
+				"action": "created"
+			},
+			"modifiedBy": [],
+			"assumption": "游戏需要后端来调用 v 函数（LLM 调用需要 API key，不能暴露在前端）。Express 已在 dependencies 中。",
+			"maxChildIndex": 1
+		},
+		"19bd5cc9-e100-4e7e-bddd-a94387767b82": {
+			"id": "19bd5cc9-e100-4e7e-bddd-a94387767b82",
+			"shortId": "O3.2",
+			"type": "objective",
+			"content": "实现浏览器前端：战棋地图 UI、将领管理、战斗交互、关卡推进",
+			"status": "planned",
+			"parentId": "aee594a4-5d28-4896-aad8-049b57de520a",
+			"childrenIds": [],
+			"codeBindings": [],
+			"createdBy": {
+				"taskId": "019c9377-712c-74d8-803e-3bf0fa651344",
+				"timestamp": "2026-02-25T06:24:44.050Z",
+				"action": "created"
+			},
+			"modifiedBy": [],
+			"assumption": "前端用纯 HTML/CSS/JS 实现（无需构建工具），由 Express 静态服务。README 描述了 3 层 12 关卡的回合制策略游戏。"
+		},
+		"b8fd178e-24d3-4857-916a-e6940d75df99": {
+			"id": "b8fd178e-24d3-4857-916a-e6940d75df99",
+			"shortId": "O3.3",
+			"type": "objective",
+			"content": "游戏文档：README.md 说明游戏玩法和 API 设计",
+			"status": "planned",
+			"parentId": "aee594a4-5d28-4896-aad8-049b57de520a",
+			"childrenIds": [],
+			"codeBindings": [],
+			"createdBy": {
+				"taskId": "019c9377-712c-74d8-803e-3bf0fa651344",
+				"timestamp": "2026-02-25T06:24:44.111Z",
+				"action": "created"
+			},
+			"modifiedBy": [],
+			"assumption": "README 中已有简要描述，需要在 game 目录下创建详细文档。"
+		},
+		"38f21559-dc7d-468c-b288-6b67f3838e19": {
+			"id": "38f21559-dc7d-468c-b288-6b67f3838e19",
+			"shortId": "A3.1.1",
+			"type": "approach",
+			"content": "分层架构：server.ts（Express 路由）+ game-engine.ts（游戏状态管理）+ vibe-api.ts（v 函数调用封装）+ 前端静态文件",
+			"status": "planned",
+			"parentId": "a5a0575a-cd5e-4894-99e2-d21fa3b88d2c",
+			"childrenIds": [
+				"1f62d7a9-78a4-4612-8cf9-9b7c135f5a71",
+				"1009920e-e777-4a8e-9c8c-8549b7aa65d7",
+				"63069ac2-c8b7-4b02-b63c-c901975d6204"
+			],
+			"codeBindings": [],
+			"createdBy": {
+				"taskId": "019c9377-712c-74d8-803e-3bf0fa651344",
+				"timestamp": "2026-02-25T06:24:55.181Z",
+				"action": "created"
+			},
+			"modifiedBy": [],
+			"assumption": "将后端拆分为三层：路由层、游戏引擎层、AI 调用层，职责清晰。vibe-api.ts 封装所有 v 函数调用并定义 Zod schema，game-engine.ts 管理游戏状态和流程。",
+			"maxChildIndex": 3
+		},
+		"1f62d7a9-78a4-4612-8cf9-9b7c135f5a71": {
+			"id": "1f62d7a9-78a4-4612-8cf9-9b7c135f5a71",
+			"shortId": "I3.1.1.1",
+			"type": "impl",
+			"content": "创建 vibe-api.ts：封装所有 v 函数调用（生成将领、生成敌人、计算伤害、敌人AI决策、生成技能效果、生成关卡描述）",
+			"status": "done",
+			"parentId": "38f21559-dc7d-468c-b288-6b67f3838e19",
+			"childrenIds": [],
+			"codeBindings": [
+				{
+					"commitHash": "562a7973d289ede0180879e5d57f4e8693efea7c",
+					"commitMessage": "[intent:I3.1.1.1] 创建 vibe-api.ts：封装所有 v 函数调用，定义 Zod schema 和类型",
+					"files": [
+						".roo/intent-tree.json",
+						"src/examples/game/vibe-api.ts"
+					],
+					"diffSummary": "2 file(s), +368 -3",
+					"timestamp": "2026-02-25T06:26:01.930Z"
+				}
+			],
+			"createdBy": {
+				"taskId": "019c9377-712c-74d8-803e-3bf0fa651344",
+				"timestamp": "2026-02-25T06:25:05.040Z",
+				"action": "created"
+			},
+			"modifiedBy": [
+				{
+					"taskId": "019c9377-712c-74d8-803e-3bf0fa651344",
+					"timestamp": "2026-02-25T06:25:10.695Z",
+					"action": "updated: content, status→in_progress"
+				},
+				{
+					"taskId": "019c9377-712c-74d8-803e-3bf0fa651344",
+					"timestamp": "2026-02-25T06:26:01.930Z",
+					"action": "bound commit 562a797"
+				},
+				{
+					"taskId": "019c9377-712c-74d8-803e-3bf0fa651344",
+					"timestamp": "2026-02-25T06:26:01.930Z",
+					"action": "updated: status→done"
+				}
+			],
+			"assumption": "vibe-api.ts 是 AI 能力的唯一入口，所有 v 函数调用集中在此，方便管理 schema 和调试。"
+		},
+		"1009920e-e777-4a8e-9c8c-8549b7aa65d7": {
+			"id": "1009920e-e777-4a8e-9c8c-8549b7aa65d7",
+			"shortId": "I3.1.1.2",
+			"type": "impl",
+			"content": "创建 game-engine.ts：游戏状态管理（关卡、地图、回合、将领/敌人位置、胜负判定）",
+			"status": "in_progress",
+			"parentId": "38f21559-dc7d-468c-b288-6b67f3838e19",
+			"childrenIds": [],
+			"codeBindings": [],
+			"createdBy": {
+				"taskId": "019c9377-712c-74d8-803e-3bf0fa651344",
+				"timestamp": "2026-02-25T06:25:05.662Z",
+				"action": "created"
+			},
+			"modifiedBy": [
+				{
+					"taskId": "019c9377-712c-74d8-803e-3bf0fa651344",
+					"timestamp": "2026-02-25T06:26:06.939Z",
+					"action": "updated: content, status→in_progress"
+				}
+			],
+			"assumption": "游戏引擎管理纯逻辑状态，不直接调用 v 函数，通过 vibe-api 获取 AI 生成内容。"
+		},
+		"63069ac2-c8b7-4b02-b63c-c901975d6204": {
+			"id": "63069ac2-c8b7-4b02-b63c-c901975d6204",
+			"shortId": "I3.1.1.3",
+			"type": "impl",
+			"content": "创建 server.ts：Express 服务器，提供 REST API 和静态文件服务",
+			"status": "planned",
+			"parentId": "38f21559-dc7d-468c-b288-6b67f3838e19",
+			"childrenIds": [],
+			"codeBindings": [],
+			"createdBy": {
+				"taskId": "019c9377-712c-74d8-803e-3bf0fa651344",
+				"timestamp": "2026-02-25T06:25:05.784Z",
+				"action": "created"
+			},
+			"modifiedBy": [],
+			"assumption": "server.ts 是入口文件，连接 Express 路由到 game-engine，并服务前端静态文件。"
+		}
+	},
+	"rootIds": [
+		"e4fe10c7-ee6c-41be-bd44-f03c70f322bb",
+		"f6cbd4e9-1ada-45ca-adde-70b2c3f53e0f",
+		"aee594a4-5d28-4896-aad8-049b57de520a"
+	],
+	"shortIdIndex": {
+		"G1": "e4fe10c7-ee6c-41be-bd44-f03c70f322bb",
+		"O1.1": "abc9f4fb-229c-4605-8ad9-8624b0307f1d",
+		"A1.1.1": "a18a3031-5526-4c22-94ff-b6f10ca40f0d",
+		"O1.2": "34e234ca-2425-46b0-8cee-9b3142bee1b9",
+		"A1.2.1": "6cbd1ffb-4eb2-499d-9e8b-9296a5f79276",
+		"O1.3": "e7b656f4-dfc7-4d36-81ff-69f6a9a1f497",
+		"A1.3.1": "2ee775bc-13e7-4ce8-8456-8255e2e8c62e",
+		"G2": "f6cbd4e9-1ada-45ca-adde-70b2c3f53e0f",
+		"O2.1": "faf99262-d850-4ccd-9e71-f118125667bb",
+		"A2.1.1": "5cf9fdbd-4014-4917-ad01-88bf83cc0d79",
+		"A2.1.2": "4ec2d586-1150-4ddc-8f73-b240d1c1fe0b",
+		"O2.2": "e39d625c-c7ca-4d92-aeda-80b3bd741cc5",
+		"A2.2.1": "05c8732e-4435-44dc-be77-49d4989ef705",
+		"A2.1.3": "60b14643-e812-4251-9eaf-ac36194d9d83",
+		"I2.1.3.1": "abf0a1ef-3f1d-4098-ba6b-f48818145e4f",
+		"I1.1.1.1": "15ffb7e7-2c3a-417c-91a7-291f2a30184d",
+		"I1.2.1.1": "98361b67-a23d-456c-8c33-2f08d5e26bb6",
+		"I1.3.1.1": "e3d870f8-6b6f-4818-9cf2-3bcf24770257",
+		"G3": "aee594a4-5d28-4896-aad8-049b57de520a",
+		"O3.1": "a5a0575a-cd5e-4894-99e2-d21fa3b88d2c",
+		"O3.2": "19bd5cc9-e100-4e7e-bddd-a94387767b82",
+		"O3.3": "b8fd178e-24d3-4857-916a-e6940d75df99",
+		"A3.1.1": "38f21559-dc7d-468c-b288-6b67f3838e19",
+		"I3.1.1.1": "1f62d7a9-78a4-4612-8cf9-9b7c135f5a71",
+		"I3.1.1.2": "1009920e-e777-4a8e-9c8c-8549b7aa65d7",
+		"I3.1.1.3": "63069ac2-c8b7-4b02-b63c-c901975d6204"
+	},
+	"rootMaxChildIndex": 3
+}
