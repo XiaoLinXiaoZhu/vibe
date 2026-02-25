@@ -794,10 +794,21 @@
 			"shortId": "I3.1.1.2",
 			"type": "impl",
 			"content": "创建 game-engine.ts：游戏状态管理（关卡、地图、回合、将领/敌人位置、胜负判定）",
-			"status": "in_progress",
+			"status": "done",
 			"parentId": "38f21559-dc7d-468c-b288-6b67f3838e19",
 			"childrenIds": [],
-			"codeBindings": [],
+			"codeBindings": [
+				{
+					"commitHash": "d2fa18d903aad67afa1a3302f73a9276dfaceb00",
+					"commitMessage": "[intent:I3.1.1.2] 创建 game-engine.ts：游戏状态管理、寻路、回合制战斗、敌人AI、关卡推进",
+					"files": [
+						"AGENTS.md",
+						"src/examples/game/game-engine.ts"
+					],
+					"diffSummary": "2 file(s), +144 -68",
+					"timestamp": "2026-02-25T06:33:41.230Z"
+				}
+			],
 			"createdBy": {
 				"taskId": "019c9377-712c-74d8-803e-3bf0fa651344",
 				"timestamp": "2026-02-25T06:25:05.662Z",
@@ -808,6 +819,16 @@
 					"taskId": "019c9377-712c-74d8-803e-3bf0fa651344",
 					"timestamp": "2026-02-25T06:26:06.939Z",
 					"action": "updated: content, status→in_progress"
+				},
+				{
+					"taskId": "019c9377-712c-74d8-803e-3bf0fa651344",
+					"timestamp": "2026-02-25T06:33:41.230Z",
+					"action": "bound commit d2fa18d"
+				},
+				{
+					"taskId": "019c9377-712c-74d8-803e-3bf0fa651344",
+					"timestamp": "2026-02-25T06:33:41.230Z",
+					"action": "updated: status→done"
 				}
 			],
 			"assumption": "游戏引擎管理纯逻辑状态，不直接调用 v 函数，通过 vibe-api 获取 AI 生成内容。"
