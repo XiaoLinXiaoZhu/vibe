@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>将领战棋 — Vibe Game</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:#1a1a2e;color:#e0e0e0;min-height:100vh}
+#app{max-width:1000px;margin:0 auto;padding:16px}
+h1{text-align:center;font-size:1.8em;margin-bottom:12px;color:#ffd700}
+h2,h3{margin-bottom:8px;color:#87ceeb}
+#status-bar{text-align:center;padding:6px;background:#16213e;border-radius:6px;margin-bottom:12px;font-size:0.9em}
+#recruit-panel{background:#16213e;padding:16px;border-radius:8px;margin-bottom:12px}
+.recruit-form{display:flex;gap:8px;margin-bottom:12px}
+.recruit-form select,.recruit-form button{padding:8px 12px;border-radius:6px;border:1px solid #444;background:#0f3460;color:#fff;cursor:pointer}
+button{padding:8px 16px;border-radius:6px;border:none;background:#e94560;color:#fff;cursor:pointer;font-size:0.9em}
+button:hover{opacity:0.85}
+button:disabled{opacity:0.4;cursor:not-allowed}
+#general-list{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.general-card{background:#0f3460;padding:10px;border-radius:8px;min-width:140px;font-size:0.85em}
+.general-card .emoji{font-size:2em}
+#battle-layout{display:flex;gap:12px}
+#map-container{flex:1}
+#grid{display:grid;grid-template-columns:repeat(8,1fr);gap:2px;background:#16213e;padding:4px;border-radius:8px}
+.cell{aspect-ratio:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.5em;cursor:pointer;position:relative;background:#1a1a3e;border:2px solid transparent}
+.cell.obstacle{background:#333}
+.cell.move-hl{border-color:#4caf50;background:#1b3a1b}
+.cell.atk-hl{border-color:#f44336;background:#3a1b1b}
+.cell.selected{border-color:#ffd700;background:#3a3a1b}
+.cell .hp-bar{position:absolute;bottom:2px;left:10%;width:80%;height:3px;background:#333;border-radius:2px}
+.cell .hp-fill{height:100%;border-radius:2px;transition:width 0.3s}
+.hp-fill.ally{background:#4caf50}
+.hp-fill.enemy{background:#f44336}
+#side-panel{width:220px;background:#16213e;padding:12px;border-radius:8px;font-size:0.85em}
+#unit-info{margin-bottom:10px}
+#action-buttons{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.skill-btn{background:#533483;font-size:0.8em;padding:6px}
+#log-panel{background:#16213e;padding:12px;border-radius:8px;margin-top:12px;max-height:200px;overflow-y:auto}
+#log{font-size:0.8em;line-height:1.6}
+#loading{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99}
+.spinner{width:40px;height:40px;border:4px solid #333;border-top-color:#ffd700;border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>⚔️ 将领战棋</h1>
+  <div id="status-bar"></div>
+  <!-- 招募面板 -->
+  <div id="recruit-panel">
+    <h2>🔮 招募将领</h2>
+    <div class="recruit-form">
+      <select id="theme">
+        <option value="奇幻">🧙 奇幻</option>
+        <option value="三国">🏯 三国</option>
+        <option value="科幻">🚀 科幻</option>
+        <option value="神话">⚡ 神话</option>
+      </select>
+      <select id="role">
+        <option value="战士">🗡️ 战士</option>
+        <option value="法师">🔮 法师</option>
+        <option value="坦克">🛡️ 坦克</option>
+        <option value="刺客">🗡️ 刺客</option>
+        <option value="辅助">💚 辅助</option>
+      </select>
+      <button onclick="recruit()" id="btn-recruit">召唤</button>
+    </div>
+    <div id="general-list"></div>
+    <button onclick="startGame()" id="btn-start" disabled>出征！</button>
+  </div>
+  <!-- 战斗界面 -->
+  <div id="battle-panel" style="display:none">
+    <div id="battle-layout">
+      <div id="map-container">
+        <div id="grid"></div>
+      </div>
+      <div id="side-panel">
+        <div id="unit-info"></div>
+        <div id="action-buttons"></div>
+        <button onclick="endTurn()" id="btn-end-turn">结束回合</button>
+      </div>
+    </div>
+  </div>
+  <!-- 日志 -->
+  <div id="log-panel">
+    <h3>📜 战斗日志</h3>
+    <div id="log"></div>
+  </div>
+  <!-- 加载遮罩 -->
+  <div id="loading" style="display:none">
+    <div class="spinner"></div>
+    <p>AI 思考中...</p>
+  </div>
+</div>
+<script>
+let state = null;
+const $ = id => document.getElementById(id);
+const loading = (show) => $('loading').style.display = show ? 'flex' : 'none';
+
+async function api(path, body) {
+  loading(true);
+  try {
+    const opts = body !== undefined
+      ? { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) }
+      : {};
+    const r = await fetch('/api/' + path, opts);
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+    state = data;
+    render();
+    return data;
+  } catch(e) { alert('错误: ' + e.message); }
+  finally { loading(false); }
+}
+
+async function recruit() {
+  const theme = $('theme').value, role = $('role').value;
+  $('btn-recruit').disabled = true;
+  await api('recruit', { theme, role });
+  $('btn-recruit').disabled = false;
+}
+async function startGame() {
+  $('btn-start').disabled = true;
+  await api('start', {});
+}
+async function endTurn() {
+  $('btn-end-turn').disabled = true;
+  await api('end-turn', {});
+  $('btn-end-turn').disabled = false;
+}
+async function resetGame() {
+  if(confirm('确定重新开始？')) await api('reset', {});
+}
+function render() {
+  if (!state) return;
+  // 状态栏
+  $('status-bar').textContent = `第${state.layer}层·第${state.stage}关 | 回合${state.turn} | ${state.phase}`;
+  // 招募/战斗面板切换
+  const isRecruit = state.phase === 'recruit';
+  $('recruit-panel').style.display = isRecruit ? 'block' : 'none';
+  $('battle-panel').style.display = isRecruit ? 'none' : 'block';
+  // 招募面板
+  if (isRecruit) {
+    $('general-list').innerHTML = state.generals.map(g =>
+      `<div class="general-card"><div class="emoji">${g.emoji}</div><b>${g.name}</b><br>${g.title}<br>HP:${g.hp} ATK:${g.atk} DEF:${g.def}</div>`
+    ).join('');
+    $('btn-start').disabled = !state.generals.length;
+    $('btn-recruit').disabled = state.generals.length >= 3;
+  }
+  // 地图
+  renderMap();
+  // 侧面板
+  renderSidePanel();
+  // 日志
+  $('log').innerHTML = state.log.map(l => `<div>${l}</div>`).join('');
+  $('log-panel').scrollTop = $('log-panel').scrollHeight;
+}
+
+function renderMap() {
+  if (!state || state.phase === 'recruit') return;
+  const moveSet = new Set(state.moveHL.map(p=>`${p.x},${p.y}`));
+  const atkSet = new Set(state.atkHL.map(p=>`${p.x},${p.y}`));
+  let html = '';
+  for (let y = 0; y < 6; y++)
+    for (let x = 0; x < 8; x++) {
+      const cell = state.map[y][x];
+      const pu = state.playerUnits.find(u=>u.x===x&&u.y===y);
+      const eu = state.enemyUnits.find(u=>u.x===x&&u.y===y);
+      const unit = pu || eu;
+      const key = `${x},${y}`;
+      let cls = 'cell';
+      if (cell.terrain==='obstacle') cls += ' obstacle';
+      if (moveSet.has(key)) cls += ' move-hl';
+      if (atkSet.has(key)) cls += ' atk-hl';
+      if (unit && unit.id === state.selectedUnitId) cls += ' selected';
+      let inner = cell.terrain==='obstacle' ? '🪨' : '';
+      if (unit) {
+        const pct = Math.round(unit.hp/unit.maxHp*100);
+        const barCls = unit.isEnemy ? 'enemy' : 'ally';
+        inner = `${unit.emoji}<div class="hp-bar"><div class="hp-fill ${barCls}" style="width:${pct}%"></div></div>`;
+      }
+      html += `<div class="${cls}" data-x="${x}" data-y="${y}" onclick="cellClick(${x},${y})">${inner}</div>`;
+    }
+  $('grid').innerHTML = html;
+}
+function renderSidePanel() {
+  if (!state) return;
+  const sel = state.selectedUnitId;
+  const u = sel && [...state.playerUnits,...state.enemyUnits].find(u=>u.id===sel);
+  if (!u) { $('unit-info').innerHTML = '<i>点击单位查看信息</i>'; $('action-buttons').innerHTML = ''; return; }
+  $('unit-info').innerHTML = `<b>${u.emoji} ${u.name}</b>${u.isBoss?' 👑':''}<br>
+    HP: ${u.hp}/${u.maxHp} | ATK:${u.atk} DEF:${u.def} SPD:${u.spd}<br>
+    移动:${u.moveRange} | ${u.hasMoved?'已移动':'可移动'} | ${u.hasActed?'已行动':'可行动'}`;
+  let btns = '';
+  if (!u.isEnemy && !u.hasActed && state.phase==='player_turn') {
+    u.skills.forEach((sk,i) => {
+      const cd = u.cooldowns[i];
+      btns += `<button class="skill-btn" onclick="selectSkill(${i})" ${cd>0?'disabled':''}>${sk.name}(范围${sk.range})${cd>0?` CD:${cd}`:''}</button>`;
+    });
+  }
+  $('action-buttons').innerHTML = btns;
+  $('btn-end-turn').disabled = state.phase !== 'player_turn';
+}
+
+let pendingSkill = -1;
+function selectSkill(i) { pendingSkill = i; alert(`已选择技能，点击敌人释放`); }
+
+async function cellClick(x, y) {
+  if (!state || state.phase !== 'player_turn') return;
+  const pu = state.playerUnits.find(u=>u.x===x&&u.y===y);
+  const eu = state.enemyUnits.find(u=>u.x===x&&u.y===y);
+  const sel = state.selectedUnitId;
+
+  // 点击己方单位 → 选中
+  if (pu && !sel) { await api('select', {unitId:pu.id}); pendingSkill=-1; return; }
+  if (pu && sel && pu.id !== sel) { await api('select', {unitId:pu.id}); pendingSkill=-1; return; }
+  // 点击已选中的自己 → 取消
+  if (pu && sel && pu.id === sel) { await api('deselect',{}); pendingSkill=-1; return; }
+
+  if (!sel) return;
+
+  // 点击敌人 → 攻击/技能
+  if (eu) {
+    if (pendingSkill >= 0) {
+      await api('skill', {unitId:sel,skillIndex:pendingSkill,targetId:eu.id});
+      pendingSkill = -1;
+    } else {
+      await api('attack', {attackerId:sel,targetId:eu.id});
+    }
+    return;
+  }
+  // 点击空地 → 移动
+  const moveSet = new Set(state.moveHL.map(p=>`${p.x},${p.y}`));
+  if (moveSet.has(`${x},${y}`)) {
+    await api('move', {unitId:sel,x,y});
+  }
+}
+
+// 初始化
+api('state');
+
+</script>
+</body>
+</html>
