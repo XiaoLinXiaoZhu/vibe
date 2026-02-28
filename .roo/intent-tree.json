@@ -651,8 +651,8 @@
 			"id": "aee594a4-5d28-4896-aad8-049b57de520a",
 			"shortId": "G3",
 			"type": "goal",
-			"content": "实现将领战棋游戏示例：Express 后端 + 浏览器前端，核心内容（将领/敌人/战斗逻辑）由 v 函数动态生成",
-			"status": "planned",
+			"content": "实现将领战棋游戏示例：Express 后端 + 浏览器前端，核心内容由 v 函数动态生成",
+			"status": "done",
 			"parentId": null,
 			"childrenIds": [
 				"a5a0575a-cd5e-4894-99e2-d21fa3b88d2c",
@@ -665,7 +665,13 @@
 				"timestamp": "2026-02-25T06:24:32.853Z",
 				"action": "created"
 			},
-			"modifiedBy": [],
+			"modifiedBy": [
+				{
+					"taskId": "019c9377-712c-74d8-803e-3bf0fa651344",
+					"timestamp": "2026-02-25T06:37:54.198Z",
+					"action": "updated: content, status→done"
+				}
+			],
 			"assumption": "README 中已描述了将领战棋游戏的概念，game 目录为空。用户明确要求按 README 描述实现完整版本。这是一个全新的目标，与现有 G1/G2 无关。",
 			"maxChildIndex": 3
 		},
@@ -674,7 +680,7 @@
 			"shortId": "O3.1",
 			"type": "objective",
 			"content": "实现 Express 后端 API：提供游戏数据生成和战斗逻辑的 REST 接口",
-			"status": "planned",
+			"status": "done",
 			"parentId": "aee594a4-5d28-4896-aad8-049b57de520a",
 			"childrenIds": [
 				"38f21559-dc7d-468c-b288-6b67f3838e19"
@@ -685,7 +691,13 @@
 				"timestamp": "2026-02-25T06:24:43.460Z",
 				"action": "created"
 			},
-			"modifiedBy": [],
+			"modifiedBy": [
+				{
+					"taskId": "019c9377-712c-74d8-803e-3bf0fa651344",
+					"timestamp": "2026-02-25T06:37:53.268Z",
+					"action": "updated: content, status→done"
+				}
+			],
 			"assumption": "游戏需要后端来调用 v 函数（LLM 调用需要 API key，不能暴露在前端）。Express 已在 dependencies 中。",
 			"maxChildIndex": 1
 		},
@@ -694,7 +706,7 @@
 			"shortId": "O3.2",
 			"type": "objective",
 			"content": "实现浏览器前端：战棋地图 UI、将领管理、战斗交互、关卡推进",
-			"status": "planned",
+			"status": "done",
 			"parentId": "aee594a4-5d28-4896-aad8-049b57de520a",
 			"childrenIds": [
 				"c812b840-ff66-46db-9507-f212419ee5ff"
@@ -705,7 +717,13 @@
 				"timestamp": "2026-02-25T06:24:44.050Z",
 				"action": "created"
 			},
-			"modifiedBy": [],
+			"modifiedBy": [
+				{
+					"taskId": "019c9377-712c-74d8-803e-3bf0fa651344",
+					"timestamp": "2026-02-25T06:37:53.856Z",
+					"action": "updated: content, status→done"
+				}
+			],
 			"assumption": "前端用纯 HTML/CSS/JS 实现（无需构建工具），由 Express 静态服务。README 描述了 3 层 12 关卡的回合制策略游戏。",
 			"maxChildIndex": 1
 		},
@@ -714,7 +732,7 @@
 			"shortId": "O3.3",
 			"type": "objective",
 			"content": "游戏文档：README.md 说明游戏玩法和 API 设计",
-			"status": "planned",
+			"status": "done",
 			"parentId": "aee594a4-5d28-4896-aad8-049b57de520a",
 			"childrenIds": [
 				"52cca4e0-aef7-4d73-a654-576da3574496"
@@ -725,7 +743,13 @@
 				"timestamp": "2026-02-25T06:24:44.111Z",
 				"action": "created"
 			},
-			"modifiedBy": [],
+			"modifiedBy": [
+				{
+					"taskId": "019c9377-712c-74d8-803e-3bf0fa651344",
+					"timestamp": "2026-02-25T06:37:54.058Z",
+					"action": "updated: content, status→done"
+				}
+			],
 			"assumption": "README 中已有简要描述，需要在 game 目录下创建详细文档。",
 			"maxChildIndex": 1
 		},
